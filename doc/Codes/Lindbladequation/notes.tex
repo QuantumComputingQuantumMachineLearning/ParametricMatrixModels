@@ -198,11 +198,162 @@ For $H = \omega a^\dagger a$ and jump operators $L_1 = \sqrt{\gamma(\tau+1)}\,a$
 + \gamma\tau\left[a^\dagger\rho a - \frac{1}{2}\{aa^\dagger,\rho\}\right].
 \]
 
+See separate Python code
+
+\section{Project 1: studies of Markovian and non-Markovian noise}
+
+More text to come here.
+
+\section{Project 2: roadmap for beyond zero noise extrapolation for quantum computing using PMMs}
+
+{\bf This text will be improved upon.}
+
+
+In the Noisy Intermediate Scale Quantum (NISQ) computing era, error
+mitigation is vital to obtain meaningful results from quantum
+algorithms running on existing hardware. This project aims to develop
+a Parametric Matrix Model (PMM) which learns the underlying open
+quantum system nature of today’s noisy quantum computers in order to
+better understand the sources of error and directly extrapolate to
+results with zero noise.
+
+
+
+Quantum gates are often modeled idealistically as unitary operators
+acting on a quantum state. However, in practice, quantum gates are
+subject to noise which can be modeled as a quantum channel. The noise
+can be characterized by a superoperator acting on the density matrix
+of the quantum state. There are many equivalent formalisms including
+the Liouville superoperator and the Kraus operator
+sum~\cite{wood2015tensor}.
+
+A simplified mathematical overview is that if a noiseless operation can be represented as a unitary operator \( U \) acting on a pure state \( |\psi\rangle \),
+\[
+|\psi\rangle \rightarrow U |\psi\rangle,
+\]
+then a noisy operation can be represented as a superoperator \( S \) acting on a vectorized density matrix \( |\rho\rangle\rangle \),
+\[
+|\rho\rangle\rangle \rightarrow S |\rho\rangle\rangle.
+\]
+Vectorization is a central operation in the Liouville formalism. The vectorization of a matrix \( A \) is formed by stacking the columns of \( A \) into a single column vector.
+
+Any noiseless quantum circuit can be represented by a product of unitary operators \( U_1, U_2, \ldots, U_n \) acting on the initial state \( |\psi_0\rangle \),
+\[
+|\psi_0\rangle \rightarrow U_n U_{n-1} \cdots U_1 |\psi_0\rangle.
+\]
+The corresponding noisy circuit can be represented by a product of superoperators \( S_1, S_2, \ldots, S_n \) acting on the vectorized initial density matrix \( |\rho_0\rangle\rangle \),
+\[
+|\rho_0\rangle\rangle \rightarrow S_n S_{n-1} \cdots S_1 |\rho_0\rangle\rangle.
+\]
+
+Unitary operators have many nice properties such as:
+\begin{itemize}
+    \item \( U^\dagger U = U U^\dagger = I \) (unitarity),
+    \item \( \lambda(U) = \{ e^{i\theta} : \theta \in \mathbb{R} \} \) (eigenvalues on the unit circle),
+    \item \( \|Ux\|_2 = \|x\|_2 \) (norm preservation).
+\end{itemize}
+
+In contrast, superoperators for quantum channels must be \emph{completely positive and trace preserving} (CPTP). For a map \( \Phi : L(H) \rightarrow L(H) \), this means:
+\begin{itemize}
+    \item For any positive semidefinite operator \( X \), \( \Phi(X) \) is also positive semidefinite.
+    \item For any Hilbert space \( H' \), \( \Phi \otimes I_{H'} \) is also positive.
+    \item \( \mathrm{tr}(\Phi(X)) = \mathrm{tr}(X) \) (trace preserving).
+\end{itemize}
+
+Completely positive maps are always positive, and every CPTP map
+represents a valid quantum channel. The matrix representation of a
+superoperator can be reshaped into a positive semidefinite matrix,
+guaranteeing complete positivity. Other properties, such as trace
+preservation and Hermiticity preservation, arise from related
+transformations.
+
+Choosing a formalism and parameterization that respects these
+properties is crucial for any PMM that aims to learn the underlying
+noise model of a quantum computer.
+
+A possible goal of this project is to develop a PMM that can learn (perhaps a
+low-dimensional representation of) the underlying open quantum system
+nature of a real quantum circuit on a real quantum computer. Using
+this, we aim to demonstrate zero-noise extrapolation using the PMM
+that is more physically constrained and potentially more accurate than
+current state-of-the-art ZNE (Zero-noise extrapolation) techniques.
+
+
+By learning the underlying noise model of each gate on a physical
+quantum computer, we can potentially use this information to construct
+circuits that are more robust to noise.
+
+
+\subsection{Implementing Hamiltonians onto a Circuit}
+
+Here one could use Qiskit to implement a Hamiltonian onto a circuit. As an examnple, we could start with a classic, the   Ising Model:
+\[
+H = B \sum_i X_i + J \sum_i Z_i Z_{i+1},
+\]
+where \( X \) and \( Z \) are Pauli operators. See Ref.~\cite{smith2019simulating} for guidance on encoding many-body Hamiltonians.
+
+\subsection{Zero-Noise Extrapolation}
+
+One could then
+study sources of noise during computation and the presence of
+different noise channels. A useful reference is Nielsen and Chuang’s
+\emph{Quantum Computation and Quantum Information}. The depolarizing
+noise channel is typically used in ZNE. Implement ZNE following
+Ref.~\cite{giurgica2020digital}, or use the \texttt{mitiq} Python
+library (\url{https://mitiq.readthedocs.io/}).
+
+Note to self: need to perform a literature search on ZNE techniques enhanced
+with neural networks (recent results within the last 1–2 years) to
+possibly include as comparison.
+
+\subsection{Exact Simulation of Simple Circuit}
+
+One could then implement an exact unitary simulation of a simple
+circuit, such as Bell-state generation and measurement. Then extend it
+to an exact noisy simulation.
+
+\subsection{PMM for Noiseless Simple Circuit}
+
+The next step is to implement a PMM for the noiseless circuit and
+train it to reproduce observables or states. Explore larger circuits
+to study potential dimensionality reduction.
+
+\subsection{PMM for Noisy Simple Circuit}
+
+
+Develop a PMM for the noisy circuit. Demonstrate that it can learn the
+underlying noise model and extrapolate to the noiseless case. Explore
+larger circuits as before.
+
+\subsection{Comparison with Traditional ZNE}
+
+Compare PMM performance with traditional ZNE methods for the simple
+circuit. This may involve real quantum hardware or realistic noise
+simulators. Here one could
+demonstrate the PMM method on real quantum hardware, comparing it with existing ZNE techniques such as those in \texttt{mitiq}. One could extend this to include tensor-network approaches (MPS, DMRG, TEBD) to reduce computational complexity.
+
 \section*{References}
-\begin{enumerate}
-    \item D. Manzano, \emph{A Short Introduction to the Lindblad Master Equation}, \href{https://arxiv.org/abs/1906.04478}{arXiv:1906.04478}, 2020.
-    \item H. Yuen, \emph{Lecture 2: Mixed States and Density Matrices}, \href{https://www.henryyuen.net/spring2022/lec2-mixed-states.pdf}{2022}.
-\end{enumerate}
+
+\begin{thebibliography}{9}
+
+\bibitem{manzano2019}  D. Manzano, \emph{A Short Introduction to the Lindblad Master Equation}, \href{https://arxiv.org/abs/1906.04478}{arXiv:1906.04478}, 2020.
+\bibitem{yuen2022}  H. Yuen, \emph{Lecture 2: Mixed States and Density Matrices}, \href{https://www.henryyuen.net/spring2022/lec2-mixed-states.pdf}{2022}.
+
+\bibitem{giurgica2020digital}
+T.~Giurgica-Tiron, Y.~Hindy, R.~LaRose, A.~Mari, and W.~J.~Zeng,
+\newblock ``Digital zero noise extrapolation for quantum error mitigation,''
+\newblock in \emph{IEEE International Conference on Quantum Computing and Engineering (QCE)}, pp. 306–316, 2020.
+
+\bibitem{smith2019simulating}
+A.~Smith, M.~S.~Kim, F.~Pollmann, and J.~Knolle,
+\newblock ``Simulating quantum many-body dynamics on a current digital quantum computer,''
+\newblock \emph{npj Quantum Information}, 5(1):106, 2019.
+
+\bibitem{wood2015tensor}
+C.~J.~Wood, J.~D.~Biamonte, and D.~G.~Cory,
+\newblock ``Tensor networks and graphical calculus for open quantum systems,'' 2015.
+
+\end{thebibliography}
 
 \end{document}
 
