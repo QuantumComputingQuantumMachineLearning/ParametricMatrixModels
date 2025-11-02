@@ -1,0 +1,417 @@
+\RequirePackage{lineno}
+\documentclass[twocolumn]{article}
+\usepackage{cite}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{color}
+\usepackage{lineno}
+\usepackage[affil-it]{authblk}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage{abstract} % needed for custom author footnotes/thanks
+\usepackage{hyperref}
+
+\newcommand{\nxn}[1]{\ensuremath{#1 \times #1}}
+\newcommand{\bra}[1]{\ensuremath{\left\langle #1 \right|}}
+\newcommand{\ket}[1]{\ensuremath{\left| #1 \right\rangle}}
+\newcommand{\braket}[2]{\ensuremath{\left\langle #1 \middle| #2 \right\rangle}}
+\newcommand{\ketbra}[2]{\ensuremath{\left| #1 \right\rangle\left\langle #2 \right|}}
+
+
+\newcommand{\MSU}{Department of Physics and Astronomy, Michigan State University, East Lansing, Michigan 48824}
+\newcommand{\CMSE}{Department of Computational Mathematics, Science and Engineering, Michigan State University, East Lansing, Michigan 48824}
+\newcommand{\FRIB}{Facility for Rare Isotope Beams, East Lansing, Michigan 48824}
+\newcommand{\Oslo}{Department of Physics and Center for Computing in Science Education, University of Oslo, N-0316 Oslo, Norway}
+\newcommand{\Cornell}{Department of Electrical and Computer Engineering, Cornell Tech, New York, NY 10044}
+\begin{document}
+
+%\linenumbers
+\title{Matrix Model Emulators}
+
+\author[1,2,3]{Patrick Cook\footnote{Contributed equally}\thanks{\texttt{cookpat4@msu.edu}; Corresponding author}}
+
+% the following disaster seems to be the only good way to get the same * footnote with two corresponding authors
+\newcommand\CoAuthorMark{\addtocounter{footnote}{-1}\footnotemark[\arabic{footnote}]\addtocounter{footnote}{1}}
+
+\author[1,2,3]{Danny Jammooa\protect\CoAuthorMark\thanks{\texttt{jammooa@frib.msu.edu}; Corresponding author}}
+
+\author[1,2,4]{Morten~Hjorth-Jensen}
+
+\author[5]{Daniel~D.~Lee}
+
+\author[1,2]{Dean~Lee}
+
+\author[5]{\dots}
+
+\affil[1]{\MSU}
+\affil[2]{\FRIB}
+\affil[3]{\CMSE}
+\affil[4]{\Oslo}
+\affil[5]{\Cornell}
+
+\date{\today} % it's always \today, today
+
+\twocolumn[
+  \begin{@twocolumnfalse}
+    \maketitle
+    \begin{abstract}
+      This paper presents a novel approach to a pervasive issue in quantum physics: the determination of extremal eigenvalues of an excessively large Hamiltonian matrix. Existing techniques, ranging from Monte Carlo simulations to variational methods, often fail when a control parameter in the Hamiltonian matrix reach beyond certain limits. The focus of this study is on a new class of implicit deep learning algorithms, termed Matrix Model Emulators (MMEs). Emulators have the potential of bypassing the computational burdens of complex scientific calculations without compromising accuracy. MMEs is a form of Machine Learning that originally was designed to leverage the structure of eigenvector continuation, enabling the calculation of extremal eigenvalues and other observables without the explicit formation of norm and Hamiltonian matrices. However, MME can be seen as a new implicit deep learning architecture. The paper tests a subset of MMEs known as Matrix Eigenvalue Emulators (MEEs) on an array of   Hamiltonians from physics and MMEs on a selection of challenging interpolation problems. Furthermore, the paper reveals MMEs/MEEs effectiveness in identifying branch points in the complex plane. Lastly, we discuss another application of MMEs known as Matrix Unitary Emulator (MUE) in reducing the so-called Trotter Error on a Quantum Computer. The results offer valuable insights for further development and potential applications of MMEs in physics and other disciplines.
+    \end{abstract}
+  \end{@twocolumnfalse}
+]
+
+
+%########################################
+\section{Introduction}
+A common challenge faced in many fields of quantum physics is finding the extremal eigenvalues and eigenvectors of a Hamiltonian matrix too large to
+store in computer memory \cite{DFrame,ASarkar}. There are numerous efficient methods developed for this task. All existing methods either use Monte Carlo simulations, diagrammatic expansions, variational methods, or some combination. The problem is that they generally fail when some control parameter in the Hamiltonian matrix exceeds some threshold value.
+\par
+Recently, the role of emulators, algorithms that provide fast yet accurate approximations to costly computations, has become increasingly crucial in addressing these computational challenges \cite{Phillips_2021,Demol_2020}.
+In fields like quantum chemistry, atomic and molecular physics and nuclear physics, extremal eigenvalues of a Hamiltonian matrix are traditionally calculated using iterative Krylov-based  methods \cite{vanloan1996}, with the Lanczos scheme widely used for symmetric matrices. Recently, a new method named  eigenvector continuation and related subspace projection methods, was proposed  for solving the generalized eigenvalue problem \cite{DFrame,ASarkar,SKONIG,PhysRevC.106.054322}. 
+% Let $N$ represent the norm matrix for the subspace, and let $H(c)$ be the projected Hamiltonian matrix with control parameters c. The eigenvector continuation emulator finds the lowest eigenvalue of the
+% matrix $N^{-1}H(c)$ or, equivalently, the Hermitian matrix 
+% \begin{equation}
+%     M(c) = N^{-1/2}H(c)N^{-1/2}
+% \end{equation}
+% By choosing the subspace basis vectors to be ground state eigenvectors for the training points $c = \{c_1, c_2,\cdots\}$, the lowest eigenvalue of $M(c)$ will then match the true ground states at all training points.
+We propose a new class of implicit deep learning algorithms \cite{bai2020multiscale,el2021implicit,kawaguchi2021theory} called Matrix Model Emulators (MMEs). A subset of MMEs known as Matrix Eigenvalue Emulators (MEEs) utilize the structure of eigenvector continuation without requiring the explicit construction of norm and Hamiltonian matrices.
+\par
+This paper is organized into a series of sections. The second section introduces the Matrix Model Emulators (MMEs). In the third section, Matrix Eigenvalue Emulators (MEEs) capabilities are examined and tested using a selection of nuclear physics Hamiltonians. The fourth section displays MMEs/MEEs prowess in finding branch points in the complex plain. The fifth section expands the application of MMEs by considering it as general implicit deep learning architecture and evaluates its performance against Pade approximation. The six section, Matrix Unitary Emulator (MUE) is explored in reducing Trotter error. Finally, the seventh section encapsulates our thoughts from the study. 
+
+%########################################
+\section{Matrix Model Emulators}
+ The most general form of Matrix Model Emulators MME is a complex Hermitian matrix whose coefficients are analytic functions of a set of parameters $M(\Vec{c})$. Here we consider the simplest case of the family of MMEs parameterized by a single variable $c$ of the form
+\begin{equation}
+\begin{aligned}
+\label{MME}
+    M(c) = A + cB
+\end{aligned}
+\end{equation}
+Where $c$ is a scalar parameter. These coefficients are determined by minimizing the difference between the $kth$ eigenvalue of $M(c)$ and true value of selected training points. Explicitly the training data/input available to MMEs is the set of triplets of a value of $c$, the index of the MMEs eigenvalue $k$, and the value of true $f(c)$.
+\begin{equation}
+    \begin{aligned}
+        \{c,k,f(c)\}
+    \end{aligned}
+\end{equation}
+
+The a family of matrices that form $M(c)\in\mathbb{C}^{\nxn{n}}$, $A$ and $B$ are given by
+
+\begin{equation}
+\label{AB}
+    \begin{aligned}
+        %A & = diag(\Vec{a}), \hspace{0.1cm} B = B^{\dagger}
+        {\scriptsize
+    A= \begin{bmatrix}
+        a_1 & 0 & 0 & 0 \\
+        0 & \ddots & 0& 0  \\
+        0 & 0 & \ddots& 0   \\
+        0 & 0& 0  & a_n  \\
+    \end{bmatrix},
+    B = \begin{bmatrix}
+        b_{11}& b_{12}&\cdots &b_{1n}  \\
+        b_{12}^*&\ddots&&b_{2n}\\
+        \vdots& &\ddots&\vdots\\
+        b_{1n}^*&b_{2n}^*&\cdots&b_{nn}
+        \end{bmatrix}
+    }
+    \end{aligned}
+\end{equation}
+
+The eigenvalues of $M(c)$ satisfy the characteristic polynomial
+\begin{equation}
+\label{cp}
+    \begin{aligned}
+        det(M(c)-\lambda)=0
+        \end{aligned}
+\end{equation}
+This is an algebraic equation in $\lambda$ of degree $n$, with coefficients which are holomorphic in $c$  excluding some distinct values of $c$ known as exceptional points. The roots of Eq.~\ref{cp} constitutes one or several analytic functions i.e. the eigenvalues of $M(c)$.
+\par 
+
+When we investigate the behavior of the eigenvalues around an exceptional point, we can assume, without losing generality, that the exceptional point is at $c=0$. Exceptional points within the complex plane correspond to an avoided level-crossing on the real-axis. The eigenvalues of $M(c)$ for $c\in D$, where $D$ is a finite region of the Riemann surface. As $D$ is continuously rotated around $c=0$, the eigenvalues maintain their analytic continuity. After a complete rotation around $c=0$, the eigenvalues undergo a permutation amongst themselves \cite{Kato:1966:PTL,DFrame,ASarkar}.
+\par
+Lets consider the avoided level-crossing between two eigenvalues $\lambda_1(c)$ and $\lambda_2(c)$. Assume these two eigenvalues converge at $c=0$ in the complex plane. Consequently, the two eigenvalues are equal, as in $\lambda_1(c=0)=\lambda_2(c=0)$. Therefore, at $c=0$,  only a single eigenvalue with a single corresponding eigenvector is present. These two eigenvalues represent the values of one analytic function on two different Riemann sheets, and these sheets converge at the branch point at $c=0$.  Now lets consider a series expansion of the eigenvalues around $c=0$:
+\begin{equation}
+    \begin{aligned}
+        E_j(c) = \sum_{n=0}^{\infty} \frac{1}{n!}E_j^{(n)}(0)c^n
+    \end{aligned}
+\end{equation}
+The presence of the branch point limits the convergence area of the series expansions, which leads to the failure of the series expansion for large values of $c$. This limitation arises as the series expansion fails to capture the change in character around an instance of avoided level-crossing due to the permutation of eigenvalues.
+\par 
+As follows, MMEs fits the coefficients of the roots of the characteristic polynomial Eq.~\ref{cp}, and as a result don't encounter the same pitfalls as a series expansion, thereby enabling MME to identify branch points. Also, since the roots of the characteristic polynomial form a polynomial, the Weierstrass approximation theorem holds for MMEs. As a consequence, MMEs can provide an efficient and natural framework for learning manifolds that are well approximated by algebraic structures.
+\par
+%########################################
+
+
+%########################################
+\section{Matrix Eigenvalue Emulator}
+%########################################
+Many-body systems are inherently complex, as they involve a large number of interacting particles that can give rise to non-perturbative behavior. This means that standard perturbation techniques, may not be suitable for accurately describing the system’s behavior in certain regimes. In the case of an avoided level crossing, the many-body corrections fail to track the change in character of the energy levels, which signifies that more sophisticated methods are needed to properly describe the system’s behavior in such instances. 
+\par
+A subset of MMEs called Matrix Eigenvalue Emulators (MEEs), can be perceived as the process of learning an effective Hamiltonian in a reduced dimensional space. Where MEEs learn an effective Hamiltonian given data only of energies as a function of a parameter $c$. 
+\begin{figure}[h!]
+    \centering
+\includegraphics[width=0.7\linewidth]{Figures/MMEFlow.png}
+    \caption{MEE training flow chart}
+    \label{fig:MEE_flow}
+\end{figure}
+\par 
+Unlike perturbation techniques, which are known to be unsuccessful in regions of avoided level crossings. By learning an effective Hamiltonian, MEEs would be able to interpolate in the region where avoided level crossing occur by tracking the changes in character. In this section we demonstrate this result in testing the Lipkin-Meshkov-Glock (LMG) model in the Total Spin Basis (TSB).
+\par
+Also known as the Dicke basis, the TSB basis vectors are denoted by $\ket{S, M}$ where $S$ is the total spin of the system and $M$ is the projection of spin onto the $z$-axis. The LMG Hamiltonian preserves $S$.
+In this basis, the LMG model Hamiltonian is given by
+\begin{equation}
+    H(c) = -S_z - \frac{2c}{N}\left(S_x^2 + S_y^2\right)
+\end{equation}
+This Hamiltonian exhibits the same phase transition at $c=1/2$.
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Figures/LMG-100-TSB-0-big.pdf}
+    \caption{Trained $\nxn{4}$ EC and MEE on a N=100 TSB LMG model}
+    \label{fig:TSB_LMG}
+\end{figure}
+For $N$ spins in the highest total spin sector ($S = N/2$), the size of the Hamiltonian in this basis is $(N+1)\times(N+1)$. Figure~\ref{fig:TSB_LMG} compares the result of N=100 TSB LMG model with a $\nxn{4}$ MEE and EC, where the MEE was trained on the two lowest lying energy states around avoided level crossing. We note that given only information of the eigenvalues MEE produced results equivalent to EC. 
+\par
+In some instances, where the eigenvectors stay fixed but rotate as a function of $c$ as seen in Figure~\ref{fig:2x2_TSB_LMG}, MEE successfully discovers a lower-dimensional representation that precisely replicates the ground state energy of the original Hamiltonian, where EC fails to identify such representation. In the case of $N=1000$ Hamitlonian, MEE was able to find a $\nxn{2}$ matrix representation.
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.4\textwidth]{Figures/2x2_mee_ec2.png}
+    \includegraphics[width=0.4\textwidth]{Figures/2x2_mee_ec3.png}
+    \caption{Trained $\nxn{2}$ MEE and $\nxn{5}$ EC for a Hamiltonian $H=-\sum_i^N\sigma^z_i-c\sum_i^N\sigma_i^x$ at $N=1000$}
+    \label{fig:2x2_TSB_LMG}
+\end{figure}
+Especially in the instance where the training points were taken away from the avoided-level crossing, EC was unable to extrapolate further, where MEE was successfully. These findings indicate that MEE has the ability to project to a lower-dimensional space in certain instances, where other methods like EC and reduced basis techniques are unable to do so.
+\par
+Another application, MEE has the capability to learn and compute additional observables $\hat{O}$.  
+\begin{equation}
+\begin{aligned}
+    \langle \hat{O}\rangle = \bra{\psi(c)}\hat{O}\ket{\psi(c)}
+\end{aligned}
+\end{equation}
+However, in order to learn $\hat{O}$, it is necessary to have already learned $M(c)$ to have access to the eigenstates $\ket{\psi(c)}$.
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.4\textwidth]{Figures/lmg1000.png}
+    \caption{Minimum eigenvalue of a $\nxn{5}$ MEE trained on ground state energies of N=1000 TSB LMG, and learning $\langle\hat{O}\rangle$.}
+    \label{fig:obv}
+\end{figure}
+Figure~\ref{fig:obv} shows the result of training the minimum eigenvalue of a $\nxn{5}$ MEE on the ground state energy of a $\nxn{1001}$ TSB LMG, then using the learned $M(c)$ to learn $\hat{O}$. A single MEE can be used to learn multiple observable for a given system. The diagram presented in Figure~\ref{fig:MEE_flow} illustrates the procedure of the MEE protocol for the learning of a matrix $M(c)$, along with its applicability in learning other observables and identifying branch points.
+%#######################################
+\section{Branch point analysis}
+ As stated in section 2, MMEs and MEEs exhibit the unique ability to discern branch points within the complex plane, a feat that is inaccessible to alternative methods. For instance, a polynomial could potentially generate an avoided level crossing for energy functions in relation to $c$, however, it would lack information concerning the branch points in the complex plain.
+ \begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Figures/bp.png}
+    \caption{ A branch cut with a branch point at $x=0$ for original system Eq.~\ref{hbp}. Trained minimum eigenvalue of $\nxn{5}$ MEE on data only from the real line (x points), and extrapolated to the complex plain for complex values of $c$.\cite{srinivasan2020sorting}}
+    \label{fig:bp}
+\end{figure}
+Consider the family of Hamiltonians:
+ \begin{equation}
+     \begin{aligned}
+     \label{hbp}
+         H = H_0 + \left(x-c\right)H_I
+     \end{aligned}
+ \end{equation}
+ Where $x,c\in\mathbb{C}$ and $x$ is a fixed value. Through selection of $x$, we can construct a Hamiltonian that demonstrates an avoided level crossing near $c=x$.  
+ \par
+ As illustrated by a branch cut in Figure~\ref{fig:bp}, we trained the minimum eigenvalue of a real affine $\nxn{5}$ MEE on real values of $c$. We then extrapolated these results to the complex plane for complex values of $c$. The real affine MEE, despite trained only on real values of $c$, was able to gain insights on data for complex values of $c$, thus identifying the branch points of the original system. This implies that the general MEE structure can learn about these branch points without explicit data concerning them or data for complex $c$ values. In contrast, other methods, such as polynomial fits, often fail to learn about features in the complex plane when trained solely on the real line.
+%########################################
+
+%########################################
+\section{MME: Interpolation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%Rewrite%%%%%%%%%%%%%%%%%%%%%
+Perturbative expansions serve as a powerful tool within theoretical physics. However, their efficiency is often hindered due to the emergence of non-convergent series, such as asymptotic series resulting from weak coupling perturbation theory in quantum field theory. Often, multiple theoretical models can describe a single system, giving access to two perturbative expansions of physical quantities at two distinct points within the parameter space\cite{honda2014perturbation,semposki2022interpolating,Ekström_2019}. Examples of such are the low and high temperature expansions in statistical systems, or the weak and strong coupling expansions in lattice gauge theory.
+\par
+However, these expansions fail to provide accurate information about the physical quantity in the intermediate region situated between the two points. The standard method physicists employ is an interpolation function, Pade approximants, to interpolate between these limits. In this section, we introduce MMEs as a implicit deep learning architecture by examining MMEs as an interpolation function using a set of problems in which the available training data is exclusively from these extreme scenarios. We then interpolate the intermediate region and draw a comparison with Pade approximation. 
+A general approach to generate expansions around small and large values of a parameter $c$ given a function, is to expand around $c=0$ and $1/c=0$.
+\par
+
+A demonstration of this comes from \cite{honda2014perturbation,semposki2022interpolating}, where the true model examined is a zero-dimensional $\phi^4$ theory partition function dependent on a parameter $g$.
+\begin{equation}
+    \begin{aligned}
+        F(g) =\int_{-\infty}^{\infty}dxe^{-\frac{x^2}{2}-g^2x^4}=\frac{e^{\frac{1}{32s^2}}}{2\sqrt{2}g}K_{\frac{1}{4}}\left(\frac{1}{32g^2}\right)
+    \end{aligned}
+\end{equation}
+With expansions around $g=0$ and $1/g=0$ to obtain:
+\begin{equation}
+    \begin{aligned}
+        F_s^{N_s}(g)=\sum_{k=0}^{N_s}s_kg^k, \hspace{0.5cm} F_l^{N_l}(g)=\frac{1}{\sqrt{g}}\sum_{k=0}^{N_l}l_kg^{-k}
+    \end{aligned}
+\end{equation}
+They utilize these expansions around small and large values of $g$ as their training data for their interpolation function. 
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Figures/BMM_vs_5x5MEE.png}
+    \caption{Overlay of the $\nxn{5}$ MEE for Ns, Nl = 5 case with the mixed model results using BMM. Inset: A close up of the central mixing
+region}
+    \label{fig:BMM}
+\end{figure}
+We adopted the same training approach to train the innermost eigenvalue of a $\nxn{5}$ MME and interpolate the 'gap' region. Note, training was done on the innermost eigenvalue due to the extremal eigenvalues having convexity constraints.
+\par
+
+\par 
+The result of the comparison is shown in Figure~\ref{fig:BMM}, where within the central mixing region, the MME demonstrates significant agreement with the exact solution.
+
+%#################################################
+\section{Matrix Unitary Emulator}
+\begin{equation}
+    \ket{\psi(t)} = U(t)\ket{\psi(0)}
+\end{equation}
+Today's prevailing model of quantum computation is the gate based model. The gates used for computation are reversible and unitary. Thus the natural language for quantum computation is through application of unitary operators. 
+\par Now given a Hamiltonian that is a sum of $k$ local Hamiltonians,
+\begin{equation}
+    H = \sum_{k=1}^n H_k
+\end{equation}
+where H is time independent. Evolution under H for time $t$ is described by the unitary operation
+\begin{equation}
+    e^{-itH}
+\end{equation}
+One can equate a sum of $k$ local Hamiltonians to a product of unitary operations, through application of the Lie-Trotter truncation of the BCH formula. If the $k$ local Hamiltonians don't commute, we have.
+\begin{equation}
+    \mathcal{L} \approx e^{-itH_n}\cdots e^{-itH_1} +\mathcal{O}(t^2)
+\end{equation}
+When $t$ is small, this evolution can be well approximated by
+\begin{equation}
+    \mathcal{L} = e^{-itH_n}\cdots e^{-itH_1}
+\end{equation}
+However, to arrive at small rotations of $t$, one runs into the problem of large circuit depth. Thus, as one decreases Trotter error, gate error increases \cite{childs2021theory,rendon2023improved}.
+\par
+The goal of the Matrix Unitary Emulator (MUE) is that given data calculated from a quantum computer for the ground state energy of an arbitrary Hamiltonian $e^{-iHdt}\approx e^{-iH_Adt}e^{-iH_Bdt}$ at different $dt$, is it possible to find lower dimensional matrices $M =A + B$ by fitting 
+\begin{align}
+\label{MUE}
+    U(dt) = e^{-iAdt}e^{-iBdt}
+\end{align} 
+to the ground state energy by setting $e^{-iEdt}=e^{-iAdt}e^{-iBdt}$? $A$ and $B$ have the same constraints as Eq.~\ref{AB} and Eq.~\ref{MUE} is then used to extrapolate to $dt\rightarrow 0$. 
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Figures/m_8_heisen.png}
+    \includegraphics[width=0.5\textwidth]{Figures/lmg.png}
+    \caption{Learning $\nxn{5}$ MUE on ground state energy training data from $U(dt)=e^{-iHdt}$ Top: $N=8$ Heisenberg Model $H=\Sigma \sigma^z_i + \Sigma (\sigma^x_i\sigma^x_{i+1} + \sigma^y_i\sigma^y_{i+1})$, Bottom: N=31 LMG model.}
+    \label{fig:MUE}
+\end{figure}
+\par As shown in Figure~\ref{fig:MUE}, MUE successfully found a $\nxn{5}$ unitary representation of the original higher dimensional unitary, and  extrapolated to low $dt$ better then a polynomial of degree $4$. 
+%#####################################
+\section{Conclusion}
+Throughout this paper, we have demonstrated the diverse capabilities of Matrix Model Emulators (MMEs). With a primary example of Matrix Eigenvalue Emulators (MEEs) and Matrix Unitary Emulators (MUE), which can be viewed as a method of dimensionality reduction, where MEEs learns an effective Hamiltonian based solely on eigenvalue data. Capable of interpolation within challenging regions, such as avoided level crossings, and enables the identification of branch points within the complex plane.
+\par
+Our research further illustrates that MEEs possess the capacity to learn other observables, and even identifying lower dimensional spaces which had proven elusive to other subspace projection methods. With the hope that MEEs gets adopted as a data driven Emulator by the quantum physics community \cite{Demol_2020,DRISCHLER2021136777,FURNSTAHL2020135719,PhysRevC.103.014612}. Moreover, MMEs have been shown to serve as new noval implicit deep learning architecture, capable of approximating certain complex, yet tractable, functions.
+\par
+Further investigations includes non-affine MMEs, and extending MMEs to approximate functions of matrices, such as matrix exponential, matrix logarithm, and others. A potential utilization of MUE, could be re-implementation of the lower dimensional $U(t)$ back into the quantum circuit, reducing the number of quibts required for calculation. Given the number of physical quibts required to form a logical quibt through use of error correction code, MUE as a quantum computing emulator for a specific calculation, might allow NISQ computers to do meaningful calculations. Additionally, the matrix elements in MMEs could be further generalized, transforming them into functions or neural networks (NN). This adaptation enhances NN prowess through its elevation to an MME, giving access to MMEs inherent structural framework. In a different field, MMEs could be beneficial for the Galerkin method used for solving partial differential equations. Lastly, we see application of MME to nuclear physics calculations, and other scientific problems.
+\par
+Initially, MMEs was proposed for applications of machine learning to nuclear theory. However, they can also be viewed as a new implicit deep learning architecture based on the generalization of eigenvector continuation and subspace projection methods now widely used in nuclear theory. Ultimately, our exploration of MMEs highlights their potential as a powerful tool for diverse applications.
+
+
+%\bibliography{references}
+\bibliographystyle{plain}
+\bibliography{references}
+\newpage
+
+\appendix
+
+\section{Optimization}
+From testing, we observed that training MMEs is capable of identifying effective solutions, particularly for smaller MMEs. With that knowledge, We designed an optimization scheme called progressive optimization, which uses this information to progressively build larger MMEs. Suppose we want an $n\times n$ MEE, we start by training the simple $\nxn{1}$ MME given by
+\begin{equation}
+    M_1(c) = a_1 + c b_1.
+\end{equation}
+We then use the result of training $a_1$ and $b_1$ to form the initial guess of the training for a $\nxn{2}$ MME:
+\begin{equation}
+    A_2^{(0)} = \begin{bmatrix}
+        a_1 & 0 \\
+        0 & \mathcal{R}_1
+    \end{bmatrix},\quad
+    B_2^{(0)} = \begin{bmatrix}
+        b_1 & \mathcal{R}_2 \\
+        \mathcal{R}_2 & \mathcal{R}_3
+    \end{bmatrix},
+\end{equation}
+where $\mathcal{R}_i$ are random numbers. The results of training this $\nxn{2}$ MME are then used to form the initial guess for the next larger MME, and so on until the desired $\nxn{n}$ MME is trained. So long as the values from the previous MME are near the true optimal values, this reduces the effective number of search directions for the optimization algorithm from $n(n+3)/2$ to a maximum of $n+1$ during the final optimization.
+\par
+An alternative form of progressive optimization, where one wants to train on multiple eigenvalues or functions, is Block Building ($B^2$). Instead of building the desired MME by increasing the size by one each iteration, the MME is trained as a series of $\nxn{n}$ MMEs to which  are used to build a larger MME. For instance, consider the scenario where one desires to train on the ground state and first excited state energies to find an MME that would act as an effective Hamiltonian, regardless of the current implementation. We start by training two $\nxn{2}$ MME, each on a particular energy. These are then combined in pairs to form the starting guess of the optimizer for the next iteration of MMEs similar to the progressive optimization method. Explicitly, we train 
+\begin{equation}
+    M^{\nxn{2}}_j(c) = \begin{bmatrix}
+    a^j_1 & 0 \\
+    0 & a^j_2
+\end{bmatrix} + c \begin{bmatrix}
+    b_1^j & b_2^j \\
+    b_2^j & b_3^j
+\end{bmatrix}.
+\end{equation}
+Each $M^{\nxn{2}}_j$ would be trained on the data for only the $j^\text{th}$ eigenvalue. These MMEs would then be paired up to form the initial guess for the next set of $\nxn{4}$ MMEs. The initial guess for the $\nxn{4}$ MME, $M_{i,j}^{\nxn{4}}$, formed from $M_i^{\nxn{2}}$ and $M_j^{\nxn{2}}$ would be
+\begin{equation}
+{\scriptsize
+    A^{(0)}_{i,j} = \begin{bmatrix}
+        a^i_1 & 0 & 0 & \\
+        0 & a^i_2 & 0 & 0 \\
+        0 & 0 & a^j_1 & 0 \\
+        0 & 0 & 0 & a^j_2
+    \end{bmatrix},
+    B^{(0)}_{i,j} = \begin{bmatrix}
+        b_1^i & b_2^i & \mathcal{R}_1 & \mathcal{R}_2 \\
+        b_2^i & b_3^i & \mathcal{R}_3 & \mathcal{R}_4 \\
+        \mathcal{R}_1 & \mathcal{R}_3 & b_1^j & b_2^j \\
+        \mathcal{R}_2 & \mathcal{R}_4 & b_2^j & b_3^j
+    \end{bmatrix}
+    }
+\end{equation}
+where $\mathcal{R}_i$ are random numbers. $M_{i,j}^{\nxn{4}}$ would then be trained only on the data for the $i^\text{th}$ and $j^\text{th}$ eigenvalues. Assuming this process provides starting guesses that are near the true optimal values, this reduces the effective number of search directions for any individual optimization to at most $K^2$, where $K$ is the number of eigenvalues used to train.
+\section{Minimization and Error Propagation}
+In the case of MME, we the fact that $x$ is the parameter vector of a matrix whose spectrum defines $\phi(\cdot)$. Thus, instead of regularizing against the norm of the parameter vector, we instead regularize against
+the average some matrix norm of the MME across all training points.
+\begin{align}
+    &x^* = \underset{x}{\arg\min}\frac{1}{N} \sum_i^N||M(x,c_i)||^2\\
+    &\text{Subject to} \hspace{0.1cm} |\phi(x)-y_i|\leq \epsilon \hspace{0.1cm}\forall i
+\end{align}
+where $||\cdot||^2$ is some consistent matrix norm, in this note we use the Frobenius norm.
+The second problem is addressed by the introduction of a slack variable si for each training point, $s = [s_0, s_1, \cdots , s_n]$,
+which allow each constraint to be broken by an amount no greater than $|s_i|$. The minimization problem then becomes
+\begin{align}
+    &x^* = \underset{x}{\arg\min}\frac{1}{N} \sum_i^N||M(x,c_i)||^2 +\gamma ||s||^2\\
+    &\text{Subject to} \hspace{0.1cm} |\phi(x)-y_i|\leq \epsilon +|s_i| \hspace{0.1cm}\forall i
+\end{align}
+Where $\gamma$ is a hyperparameter which defines the relative importance of the slack variable penalty term, which is a vector norm. \\
+By utilizing completely unconstrained minimization with Lagrange multipliers, we can get an SVR-like cost
+function which contains all the information necessary to perform one-shot uncertainty quantification via the usual inverse
+Hessian approach. As the technique of Lagrange multipliers is covered in many numerical analysis textbooks, we provide
+only the final formulation of the problem below
+\begin{align}
+\label{cost}
+    x^* = \underset{x}{\arg\min}\frac{1}{N} \sum_i^N||M(x,c_i)||^2 +\gamma ||s||^2 +\beta\sum_i^N|\phi(x)-y_i| -\epsilon +|s_i|
+\end{align}
+Where $\beta$ is a hyperparameter which defines the relative importance of the Lagrange multiplier penalty term.\\
+Denote the cost function in Eq. \ref{cost} by $f(X)$. Uncertainties in any arbitrary function of the parameters $X=[x,s]$ can be calculated by the usual error propagation formula
+\begin{align}
+    \Delta \theta^2 = (f(X)-\hat{f})\sum_{ij} \left(\frac{\partial\theta}{\partial X_i}\bigg|_{X^*} (H^{-1})_{ij} \frac{\partial\theta}{\partial X_j}\bigg|_{X^*}\right)
+\end{align}
+where
+\begin{align}
+    H_{ij} = \frac{1}{2}\frac{\partial^2 f}{\partial X_i\partial X_j} \bigg|_{X^*}
+\end{align}
+and $\hat{f}$ is the true global minimum of the cost fucntion. When the MME regularization term is the Forbenius norm, this is estimated as
+\begin{align}
+    \hat{f} \approx \frac{1}{N}\sum_i^N |y_i|^2-N\beta\epsilon
+\end{align}
+which assumes that $s^*=0$, the model fits the training data exactly, and uses the lower bound for the Forbenius norm of a Matrix A with eigenvalues $\lambda_i$
+\begin{align}
+    \sum_i|\lambda_i|^2\leq||A||_F^2
+\end{align}
+\subsection{Hellmann-Feynman Theorem}
+When training MMEs, all computational tasks are handled by local optimization algorithms, including but not limited to Nelder-Mead, L-BFGS-B, Powell, and Newton-CG. For detailed information on how these optimizers are used, please refer to our GitHub package. This also includes the computation of the gradient of the MME. However, if one wants to use an analytical gradient, one can  use the Hellmann-Feynman Theorem (HFT). HFT relates the derivative of an eigenvalue of $M(\alpha)$ for some $\alpha$ to the expectation value of:
+\begin{equation}
+    \begin{aligned}
+        \frac{dE}{d\alpha} = \bra{\psi_\alpha}\frac{dM(\alpha)}{d\alpha}\ket{\psi_\alpha}
+    \end{aligned}
+\end{equation}
+for the corresponding $k^{th}$ eigenvector $\ket{\psi_\alpha}$ of $M(\alpha)$, so long as $\frac{d}{d\alpha}\braket{\psi_\alpha}{\psi_\alpha}=0$. Here, we have $\alpha =a_{ij},b_{ij}$ the matrix elements of $A$ and $B$ of $M$. Due to our choice of $M(c)$, $\frac{dM(c)}{d\alpha_i}$ can be readily calculated as:
+\begin{equation}
+    \label{eq:partialM}
+    \frac{\partial M(c)}{\partial \alpha_j} = \begin{cases}
+        \mathbf{e}_j \mathbf{e}_j^T & \text{if } (\alpha_j~\text{is in}~diag(A)) \\
+        c\left(\mathbf{e}_j \mathbf{e}_j^T\right) & \text{if } (\alpha_j~\text{is in}~diag(B))\\
+        c\left(\mathbf{e}_j \mathbf{e}_i^T + \mathbf{e}_i \mathbf{e}_j^T\right) & \text{if }  (\alpha_j~\text{is in off-}diag(B))
+    \end{cases}.
+\end{equation}
+Where we have switched to zero-based indexing for the vectors, and $\mathbf{e}_i$ is the $n$-dimensional column vector of all zeros except for a single $1$ at the $i^\mathrm{th}$ position. 
+%########################################
+\section{branch points}
+\cite{srinivasan2020sorting}
+%########################################
+\end{document}

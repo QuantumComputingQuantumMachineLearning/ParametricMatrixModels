@@ -1,0 +1,875 @@
+%
+\documentclass[10pt]{wlscirep}
+%
+\usepackage[resetlabels]{multibib}
+%\usepackage{mathptmx}
+%\usepackage[T1]{fontenc}
+%\usepackage[latin9]{inputenc}
+%\usepackage{array}
+%\usepackage{bm}
+%\usepackage{amsmath}
+%\usepackage{graphicx}
+%\usepackage[normalem]{ulem}
+%\usepackage{amssymb}
+
+%\renewcommand{\familydefault}{\rmdefault}
+\usepackage{amsfonts,amssymb,stmaryrd,latexsym,amsmath,braket}
+\usepackage{graphicx,subfig,float} % subfigure has long been deprecated
+\usepackage[export]{adjustbox}
+\usepackage{array}
+\usepackage{times}
+\usepackage{bbm}
+\usepackage{bm}
+\usepackage{mathrsfs}
+\usepackage{slashed}
+\usepackage[version=3]{mhchem}
+\usepackage{braket}
+\usepackage{hyperref}
+\usepackage{verbatim}
+\usepackage[utf8]{inputenc}
+\usepackage{tabularx, tabularray}
+\usepackage{siunitx}
+\usepackage{xparse}
+\sisetup{detect-weight=true,detect-inline-weight=math,detect-all=true}
+\newcommand{\beginsupplement}{%
+        \setcounter{table}{0}
+        \renewcommand{\thetable}{S\arabic{table}}%
+        \setcounter{figure}{0}
+        \renewcommand{\thefigure}{S\arabic{figure}}%
+        \setcounter{equation}{0}
+        \renewcommand{\theequation}{S\arabic{equation}}        
+     }
+     
+\usepackage{graphicx}
+\usepackage{times}
+\usepackage{slashed}
+\usepackage{braket}
+\usepackage{verbatim}
+\usepackage{multirow}
+\usepackage[utf8]{inputenc}
+\usepackage{array}
+\usepackage{tensor}
+\usepackage{todonotes}
+\DeclareMathOperator{\atantwo}{atan2}
+\DeclareMathOperator{\softmax}{softmax}
+\newcommand{\PreserveBackslash}[1]{\let\temp=\\#1\let\\=\temp}
+\newcolumntype{C}[1]{>{\PreserveBackslash\centering}p{#1}}
+\newcolumntype{R}[1]{>{\PreserveBackslash\raggedleft}p{#1}}
+\newcolumntype{L}[1]{>{\PreserveBackslash\raggedright}p{#1}}
+
+\newcommand{\nxn}[1]{{\ensuremath{#1\times#1}}}
+\newcommand{\nxm}[2]{{\ensuremath{#1\times#2}}}
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\C}{\ensuremath{\mathbb{C}}}
+\newcommand{\Herm}{\ensuremath{\mathbb{H}}}
+\newcommand{\U}{\ensuremath{\mathbb{U}}}
+\newcommand{\train}[1]{\ensuremath{\underline{#1}}}
+\newcommand{\hyper}[1]{\ensuremath{\overline{#1}}}
+\newcommand{\abs}[1]{\ensuremath{\left|#1\right|}}
+\newcommand{\norm}[1]{\ensuremath{\left\Vert #1 \right\Vert}}
+\newcommand{\mathset}[1]{\ensuremath{\left\{ #1 \right\}}}
+\newcommand{\expm}[1]{\ensuremath{\mathrm{exp}\left\{#1\right\}}}
+\newcommand{\bigO}[1]{\ensuremath{\mathcal{O}\left(#1\right)}}
+
+\newcommand{\approxpropto}{%
+  \ensuremath{%
+      \mathrel{\vbox{\offinterlineskip\ialign{%
+        \hfil##\hfil\cr
+        $\sim$\cr
+        \noalign{\kern-0.1ex}
+        $\propto$\cr
+}}}}}
+
+\newcommand{\blockcomment}[1]{}
+
+\newcommand{\MSU}{Department of Physics and Astronomy, Michigan State University, East Lansing, Michigan 48824}
+\newcommand{\CMSE}{Department of Computational Mathematics, Science and Engineering, Michigan State University, East Lansing, Michigan 48824}
+\newcommand{\FRIB}{Facility for Rare Isotope Beams, Michigan State University, East Lansing, Michigan 48824}
+\newcommand{\Oslo}{Department of Physics and Center for Computing in Science Education, University of Oslo, N-0316 Oslo, Norway}
+\newcommand{\Cornell}{Department of Electrical and Computer Engineering, Cornell Tech, New York, NY 10044}
+\makeatletter
+\def\namedlabel#1#2{\begingroup
+   \def\@currentlabel{#2}%
+   \label{#1}\endgroup
+}
+\makeatother
+
+\title{Parametric Matrix Models}
+
+\author[*,1,2]{Patrick Cook} % ORCiD 0000-0002-7934-5428
+
+\author[*,1,2]{Danny Jammooa}
+
+\author[3,1,2]{Morten~Hjorth-Jensen}
+
+\author[4]{Daniel~D.~Lee}
+
+\author[1,2]{Dean~Lee}
+
+\affil[1]{\FRIB}
+\affil[2]{\MSU}
+%\affil[3]{\CMSE}
+\affil[3]{\Oslo}
+\affil[4]{\Cornell}
+\affil[*]{These authors contributed equally to this work} % as per nature guidelines: asterisk and this line immediately after addresses
+
+\begin{abstract}
+We present a general class of machine learning algorithms called parametric matrix models.  In contrast with most existing machine learning models that imitate the biology of neurons \cite{hopfield1988artificial,hinton1992neural,jain1996artificial,hinton2006reducing,yuste2015neuron,lecun2015deep,karniadakis2021physics}, parametric matrix models use matrix equations that emulate the physics of quantum systems.  Similar to how physics problems are usually solved, parametric matrix models learn the governing equations that lead to the desired outputs.  Parametric matrix models can be efficiently trained from empirical data, and the equations may use algebraic, differential, or integral relations.  While originally designed for scientific computing, we prove that parametric matrix models are universal function approximators that can be applied to general machine learning problems.  After introducing the underlying theory, we apply parametric matrix models to a series of different challenges that show their performance for a wide range of problems.  For all the challenges tested here, parametric matrix models produce accurate results within an efficient and interpretable computational framework that allows for input feature extrapolation.
+\end{abstract}
+
+\flushbottom
+\begin{document}
+
+\DeclareDocumentCommand\asymunc{ m m g }{%
+    {\ensuremath{%
+        {#1}%
+        ^{+#2}%
+        \IfNoValueF {#3} {_{-#3}}%
+        \IfNoValueT {#3} {_{-#2}}%
+        }
+    }%
+}
+
+\maketitle  
+
+One of the first steps in solving any physics problem is identifying the governing equations.  While the solutions to those equations may exhibit highly complex phenomena, the equations themselves have a simple and logical structure.  The structure of the underlying equations leads to important and nontrivial constraints on the analytic properties of the solutions.   Some well-known examples include symmetries, conserved quantities, causality, and analyticity.  Unfortunately, these constraints are usually not reproduced by machine learning algorithms, leading to inefficiencies and limited accuracy for scientific computing applications. Current physics-inspired and physics-informed machine learning approaches aim to constrain the solutions by penalizing violations of the underlying equations~\cite{raissi2019physics,karniadakis2021physics,schuetz2022combinatorial}, but this does not guarantee exact adherence.  Furthermore, the results of many modern deep learning methods suffer from a lack of interpretability.  To address these issues, in this work we introduce a new class of machine learning algorithms called parametric matrix models.  Parametric matrix models (PMMs) use matrix equations similar to the physics of quantum systems and learn the governing equations that lead to the desired outputs.  Since quantum mechanics provides a fundamental microscopic description of all physical phenomena, the existence of such matrix equations is clear.  Parametric matrix models take the additional step of applying the principles of model order reduction and reduced basis methods \cite{quarteroni2015reduced,hesthaven2015certified} to find efficient approximate matrix equations with finite dimensions. 
+
+While most machine learning methods optimize some prescribed functional form for the output functions, PMMs belong to a class of machine learning methods based on implicit functions \cite{chen2018neural,bai2019deep,zhang2019equilibrated,kag2019rnns,gu2020fenchel,el2021implicit}.  We define a PMM as a set of matrix equations with unknown parameters that are optimized to express the desired outputs as implicit functions of the input features.   There are many possible choices for the matrix equations.  In this work, we define a basic PMM form composed of primary matrices, $P_j$, and secondary matrices, $S_k$.  All of the matrix elements of the primary and secondary matrices are analytic functions of the set of input features, $\mathset{c_l}$.  For dynamical systems, one of the input features would be time.  We consider functional forms for the primary and second matrix elements that are preserved under unitary transformations of the matrices.  The primary matrices are square matrices that are either Hermitian matrices or unitary matrices, and their corresponding normalized eigenvectors, $v^{(i)}_j$, are used to form bilinears with secondary matrices of appropriate row and column dimensions to form scalar outputs of the form, $v^{(i)\dagger}_j S_k v^{(i')}_{j'}$.  When $i=i'$ and $j=j'$, the resulting output is the expectation value of $S_k$ associated with eigenvector $v^{(i)}_j$.
+When $i\ne i'$ or $j\ne j'$, the output is the transition amplitude induced by $S_k$ between eigenvectors $v^{(i)}_j$ and $v^{(i')}_{j'}$.  Since the transition amplitudes carry an arbitrary complex phase, we work with transition probabilities composed of squared absolute values of the amplitudes.  We note the close analogy between outputs of PMMs and observables in quantum mechanics.  This has the practical benefit that gradients with respect to any unknown parameters can be computed efficiently using first-order perturbation theory \cite{Kato:1966:PTL,shavitt2009many}. This design feature is very useful for efficient parameter optimization. 
+
+When optimizing the unknown trainable parameters of a PMM, the search process can be accelerated by applying unitary transformations to the matrices and eigenvectors.  For each column or row dimension $n$ used in a PMM, we let $U_n$ be an arbitrary $n \times n$ unitary matrix. We multiply each eigenvector of length $n$ by $U_n$ and multiply each $n \times m$ matrix by $U_n$ on the left and $U^\dagger_m$ on the right.  The unitary transformation leaves all outputs invariant while producing significant changes to the parameter values.  We have found that combining random unitary transformations with local updating methods is very useful for accelerating parameter optimization in PMMs.
+
+In order to provide an intuitive picture of the implicit functions being crafted by PMMs, we describe the connection between PMMs and a reduced basis method called eigenvector continuation (EC) \cite{DFrame,Demol:2019yjt,Konig:2019adq,Ekstrom:2019lss,Furnstahl:2020abp,Sarkar:2020mad,Hicks:2022ovs,Melendez:2022kid,PhysRevC.106.054322,Duguet:2023wuh}. Let us consider a family of Hermitian matrices $H(\{c_l\})$ whose elements are analytic functions of real input features, $\mathset{c_l}$.  The EC calculation starts by picking some set of eigenvectors at selected values for the input features, and projects all vectors to the subspace spanned by these eigenvector ``snapshots''. The problem then reduces to finding the eigenvalues and eigenvectors of a much smaller Hermitian matrix $M(\{c_l\})$, whose elements are also analytic functions of $\mathset{c_l}$.  The eigenvalues are roots of the characteristic polynomial, $\det [\lambda \mathbb{I}-M(\{c_l\})]$. If we approximate the dependence on the input features over some compact domain using polynomials, then each eigenvalue, $\lambda$, corresponds to the roots of a polynomial in $\lambda$ with coefficients that are themselves polynomials with respect to the input features.  For all real values of the input features, $\lambda$ is analytic and bounded by the norm of $M(\{c_l\})$.  Using only general arguments of analyticity, in Ref.~\cite{Duguet:2023wuh} it is shown that for $p$ input features and $N$ eigenvector snapshots, the error of the EC approximation diminishes as a decaying exponential function of $N^{1/p}$ in the limit of large $N$. For the case of eigenvalue problems, PMMs capture the essential features of EC calculations by proposing some unknown Hermitian matrix $M(\{c_l\})$ and then learning the matrix elements from data.  In Methods, we discuss the connection further and consider examples where PMMs outperform EC.
+
+Parametric matrix models can be designed to incorporate as much mathematical and scientific insight as possible or used more broadly as an efficient universal function approximator.  It is useful to consider a class of PMMs where the matrix elements of the primary and secondary matrices are polynomial functions of the input features, $\mathset{c_l}$, up to some maximum degree $D$.  In Methods, we prove a universal approximation theorem for PMMs using only affine functions of the input features, corresponding to $D=1$.  In the numerical examples presented here, we show that $D=1$ PMMs achieve excellent performance comparable to or exceeding that of other machine learning algorithms---while requiring fewer parameters.  In addition, PMMs typically need fewer hyperparameters to tune as compared with other machine learning approaches, therefore requiring less fine-tuning and model crafting.  This efficiency of description does not imply a loss of generality or flexibility. It is instead the result of a natural inductive prior that prioritizes functions with the simplest possible analytic properties.  
+While matrix-based approaches have also been widely used in machine learning for dimensionality reduction 
+\cite{lee2000algorithms,wang2012nonnegative,saul2022geometrical}, PMMs represent a new approach based on physics principles and implicit functions derived from matrix equations. We first demonstrate the superior performance of PMMs for three scientific computing examples:  multivariable regression, quantum computing, and quantum many-body systems.  We then show the broad versatility and efficiency of PMMs on several supervised image classification benchmarks as well as hybrid machine learning when paired together with both trainable and pre-trained convolutional neural networks.
+
+For our first benchmark, we have compared the performance of PMMs for multivariable regression against several standard techniques:  Kernel Ridge Regression (KRR), Multilayer Perceptron (MLP), $k$-Nearest Neighbors (KNN), Extreme Gradient Boosting (XGB), Support Vector Regression (SVR), and Random Forest Regression (RFR).  See, for example, Ref.~\cite{Hastie2009} for a description of most of these methods and Ref.~\cite{Chen2016} for XGB.  We consider two-dimensional test functions that include thirteen individual functions and two classes of functions that are described in Methods \cite{Runge1901,Franke1979,Romero2006,Burkardt2016}. For each of these functions, we train a PMM with one primary Hermitian matrix, either $7\times 7$ or $9\times 9$, and form outputs using the three eigenvectors associated with the largest magnitude eigenvalues and Hermitian secondary matrices.  We also test the performance on the NASA Airfoil dataset~\cite{NASA_airfoil} of measurements of 2D and 3D airfoils in a wind tunnel and the CERN dielectron dataset~\cite{CERN2014} of $\num{100000}$ collision events. Similar to the approach used for the test functions, three eigenvectors of a $7\times 7$ ($15\times 15$) primary Hermitian matrix were used to form the output of the PMM for the NASA (CERN) dataset. Full details are given in Methods.
+
+In the left panel of Fig.~\ref{fig:regression}, we show the normalized mean absolute error for the seventeen different regression examples.  The normalized mean absolute error is the average absolute error divided by the largest absolute value in the test data.  The mean performance for all benchmarks is indicated by dashed horizontal lines, and we see that the performance for PMMs is significantly better than that of the other methods, obtaining the lowest error for fifteen of the seventeen benchmarks.  The functional form for KRR is ideally suited for bilinear functions, and its corresponding error for Bilinear lies below the minimum of the plot range in Fig.~\ref{fig:regression}.  MLP has a slightly smaller error for the NASA Airfoil dataset.  However, PMMs use an order of magnitude fewer trainable real parameters (\texttt{float}s) than the corresponding MLP for each benchmark example.
+
+For our second benchmark, we turn to a fundamental problem in quantum computing regarding the time evolution of a quantum system.  The Hamiltonian operator $H = \sum_l H_l$ determines the energy of a quantum system, and the time evolution operator $U(dt)$ for time step $dt$ can be approximated as a product of terms $\prod_l \exp(-iH_ldt)$ with some chosen ordering. This product is known as a Trotter approximation \cite{trotter1959product}, and higher-order improvements to the Trotter approximation are given by the Trotter-Suzuki formulae \cite{Suzuki:1976,Suzuki:1993,childs2021theory}.  It is convenient to define an effective Hamiltonian $H_{\rm eff}$ such that its time evolution operator $\exp(-iH_{\rm eff}dt)$ matches the Trotter approximation for $U(dt)$.  Using the Trotter approximation, the quantum computer can then find the eigenvalues and eigenvectors of $H_{\rm eff}$.  In the limit $dt \rightarrow 0$, $H_{\rm eff}$ is the same as $H$.  However, the number of quantum gate operations scales inversely with the magnitude of $dt$, and so a major challenge for current and near-term quantum computing is extrapolating observables to $dt = 0$ from values of $dt$ that are not very small in magnitude, giving thereby many more operations in terms of different gates.  Several polynomial fitting methods have been developed for this purpose \cite{Endo:2019,vazquez2022enhancing,Rendon:2022csn}.
+
+We consider a quantum spin system of $N=10$ spins corresponding to a one-dimensional Heisenberg model with an antisymmetric spin-exchange term known as the Dzyaloshinskii-Moriya (DM) interaction \cite{DZYALOSHINSKY1958241,moriya1960anisotropic}.  Such spin models have recently attracted interest in studies of quantum coherence and entanglement \cite{motamedifar2023entanglement,radhakrishnan2017quantum,li2023quantum}.  For the PMM treatment of time evolution using this Hamiltonian, we replicate the matrix product structure of the Trotter approximation using a product of $9\times9$ unitary matrices, $\prod_l \exp(-iM_l dt)$. We then find the eigenvalues and eigenvectors of the Hermitian matrix $M_{\rm eff}$ such that $\exp(-iM_{\rm eff}dt) = \prod_l \exp(-iM_l dt)$.  In the right panel of Fig.~\ref{fig:regression}, we show the lowest three energies of the effective Hamiltonian, $H_{\rm eff}$, versus time step $dt$. We show results for the PMM in comparison with a Multilayer Perceptron (MLP) with two hidden layers with $\num{50}$ nodes using the Rectified Linear Unit (ReLU) activation function and polynomial interpolation (Poly). The hyperparameters for the MLP were found via a grid search.  The training and validation samples are located away from $dt=0$, where calculations on a current or near-term quantum computer are practical. The relative errors at $dt=0$ for the predicted energies are shown in the inset, and we see that the PMM is more accurate than the two other methods for each of the low-lying energy eigenvalues and more than an order of magnitude better for the ground state $E_0$.
+
+\begin{figure}
+\centering
+\includegraphics[height=5.5cm]{./Figures/error_plot.pdf}
+\includegraphics[height=5.5cm]
+{./Figures/DM.pdf}
+\caption{{\bf Left Panel:  Performance on regression problems.} Normalized mean absolute error for the PMM (blue) compared against several standard techniques: Kernel Ridge Regression (KRR, orange), Multilayer Perceptron (MLP, green), $k$-Nearest Neighbors (KNN, red), Extreme Gradient Boosting (XGB, purple), Support Vector Regression (SVR, brown), and Random Forest Regression (RFR, pink). Mean performance across all problems are shown as dashed lines.  \label{fig:regression}
+{\bf Right Panel:  Extrapolated Trotter approximation for quantum computing simulations.} We plot the lowest three energies of the effective Hamiltonian for the one-dimensional Heisenberg model with DM interactions versus time step $dt$. We compare results obtained using a PMM, Multilayer Perceptron (MLP), and polynomial interpolation (Poly). All training (diamonds) and validation (circles) samples are located away from $dt=0$, where data acquisition on a quantum computer would be practical. The inset shows the relative error in the predicted energies at $dt=0$ for the three models.} 
+\end{figure}
+
+For our third benchmark, we consider a quantum Hamiltonian for spin-$1/2$ particles on $N$ lattice sites with tunable anharmonic long-range two-body interactions called the anharmonic Lipkin-Meshkov-Glick (ALMG) model \cite{Heiss_2005,Gamito2022}. 
+Here we take the anharmonicity parameter, $\alpha$, to be $\alpha = -0.6$. There is a second-order ground-state quantum phase transition in the two-particle pairing parameter, $\xi$, at $\xi = 0.2$, above which the ground state becomes exactly degenerate in the large $N$ limit and the average particle density in the ground state, $\braket{\hat{n}}/N$, becomes nonzero.  For the calculations presented here, we take $N = 1000$.  The details of the Hamiltonian are described in Ref.~\cite{Heiss_2005,Gamito2022}.  All training and validation data was taken away from the region of the phase transition. We employ a $\nxn{9}$ PMM with primary matrices that form an affine latent-space effective Hamiltonian of the same form as the true underlying model as well as a secondary matrix that serves as the latent-space effective observable. The PMM is trained by optimizing the mean squared error between the lowest two eigenvalues of the effective Hamiltonian and the expectation value of the effective observable in the ground state of the effective Hamiltonian to the data. A regularization term, proportional to the sum of differences between unity and the overlap between eigenvectors at successive values of $\xi$, is added to this loss function to encode knowledge of the possibility of a phase transition for which only one term in this series will be substantially nonzero. The same amount of physical information cannot be directly encoded in traditional neural network methods. As such, the MLP for this problem used a single input node, two hidden layers of $\num{100}$ neurons each with ReLU activations, three output neurons, and was trained by optimizing the mean squared error between the predictions and the data with a standard $l_2$ regularizer on the weights. The weight of the regularizer as well as the activations, sizes, and number of hidden layers were found via a grid search. In the left panel of Fig.~\ref{fig:realALMG}, we show PMM results versus MLP results for the lowest two energy levels of the ALMG model versus $\xi$.  In the right panel of Fig.~\ref{fig:realALMG} we show PMM results versus MLP results for the average particle density in the ground state, $\braket{\hat{n}}/N$, versus $\xi$.  We see that in all cases, that the PMM significantly outperforms the MLP and is able to accurately reproduce the phase transition.
+
+\begin{figure}
+\centering\includegraphics[width=0.7\textwidth]{./Figures/ALMG.pdf}
+\caption{{\bf Left Panel: Lowest two energy levels of the ALMG model versus $\xi$.} We show PMM results compared with Multilayer Perceptron (MLP) results.  The upper plots show the energies, and the lower plots show absolute error. The main plots show the region around the phase transition; the insets show the full domain where data was provided. {\bf Right Panel: Average particle density for the ground state of the ALMG model versus $\xi$.}  We show PMM results compared with Multilayer Perceptron (MLP) results. The upper plots show the average particle density, and the lower plots show absolute error. The main plots show the region around the phase transition; the insets show the full domain where data was provided.\label{fig:realALMG}}
+\end{figure}
+
+In addition to superior numerical performance for scientific computing, PMMs also provide new functionality for mathematical analysis that is not possible with other machine learning methods.  In Fig.~\ref{fig:complexALMG}, we show predictions using the same PMM as discussed above for the complex-valued ground state energy of the ALMG model for complex values of $\xi$.  We emphasize that the PMM is trained using only real values of $\xi$. The left plot shows the exact results, the middle plot shows the PMM predictions, and the right plot shows the absolute error with contour lines outlining the region where the error is less than $0.05$.  The ability of the PMMs to accurately extrapolate the behavior of systems to complex parameters is invaluable for understanding and analyzing the mathematical structures giving rise to exceptional points, avoided level crossings, and phase transitions.
+ 
+\begin{figure}
+\centering\includegraphics[width=0.7\textwidth]{./Figures/complex_ALMG.pdf}
+\caption{{\bf Complex-valued ground state energy of the ALMG model for complex $\xi$.} We show PMM predictions for the complex-valued ground state energy for complex values of $\xi$, using training data at only real values of $\xi$. The left plot shows the exact results, the middle plot shows the PMM predictions, and the right plot shows the absolute error. \label{fig:complexALMG}}
+\end{figure}
+
+To demonstrate the efficacy of PMMs beyond scientific computing, for our fourth benchmark we address the problem of supervised image classification on several standard datasets. The field of computer vision has long been dominated by convolutional neural networks (CNNs), and still today, many novel machine learning architectures in computer vision make significant use of convolutions. However, it is often the case that without careful regularization, architecture refinements, or model crafting, these networks become massively over-parameterized. Here, we formulate a PMM for the problem of image classification that is both accurate and highly efficient in the number of trainable parameters.
+
+A natural encoding for images in the context of Hermitian matrix equations is to consider smaller fixed square or rectangular windows of each image, $W_l$. The row-wise and column-wise Gram matrices of the windows, $W_l W_l^\dagger$ and $W_l^\dagger W_l$ respectively, are combined using trainable quasi-congruence transformations into a single primary matrix for each possible output class.  We then form bilinears of the eigenvectors of the primary matrices with trainable secondary matrices and use the resulting scalars to produce class probabilities for the input images. We train the model using complex-valued gradient descent to minimize the categorical cross-entropy loss function, a measure of the difference between the predicted and true probabilities. More details of the architecture are found in Methods.  In Table~\ref{tbl:ImagePMM}, we show results for this pure PMM model versus the performance of other highly efficient methods on several image classification datasets.  We present the accuracy on withheld test sets in percent as well as the number of trainable floating point parameters. We see that in all cases, the performance of our method is comparable or superior to existing methods, despite using fewer parameters.
+
+\begin{table}
+    \begin{minipage}[b]{0.45\linewidth}
+    \bgroup
+    \def\arraystretch{1.2}
+    \centering
+    \begin{tabular}{p{4.5em} p{5.75em} S[table-format=2.2,table-column-width=2em] >{\raggedleft\arraybackslash}p{5.25em}}
+    \hline
+    \textbf{Dataset} & \textbf{Model} & {\textbf{Acc.}} & {\textbf{\texttt{float}}}\\
+    \hline
+    \multirow{9}{*}{\shortstack[l]{MNIST\\ Digits~\cite{LecunMNIST}}} & PMM$^\dagger$ & 97.38 & $\num{4990}$ \\
+                 & ConvPMM & 98.99 & $\num{129416}$ \\
+                 \cline{2-4}
+                 & DNN-2$^\dagger$~\cite{DNNResNet} & 96.5 & $\sim\num{311650}$\\ % 96.5 IS NOT A MISTAKE! PapersWithCode incorrectly lists this score as 96.4
+                 & DNN-3$^\dagger$~\cite{DNNResNet} & 97.0 & $\sim\num{386718}$\\
+                 & DNN-5$^\dagger$~\cite{DNNResNet} & 97.2 & $\sim\num{575050}$\\
+                 & GECCO~\cite{feinashley2024single} & 98.04 & $\sim\num{19000}$\\
+                 & CTM-250~\cite{granmo2019convolutional} & 98.82 & $\num{31750}$\\
+                 & \mbox{CTM-8000}~\cite{granmo2019convolutional} & 99.4 & $\num{527250}$\\
+                 & \mbox{Eff.-CapsNet}~\cite{Mazzia_2021} & 99.84 & $\num{161824}$\\
+    \hline
+    \multirow{8}{*}{\shortstack[l]{Fashion\\MNIST~\cite{xiao2017fashionmnist}}} & PMM$^\dagger$ & 88.58 & $\num{16744}$ \\
+                  & ConvPMM & 90.89 & $\num{278280}$ \\
+                  \cline{2-4}
+                  & GECCO~\cite{feinashley2024single} & 88.09 & $\sim\num{19000}$\\
+                  & CTM-250~\cite{granmo2019convolutional} & 88.25 & $\num{31750}$\\
+                  & \mbox{CTM-8000}~\cite{granmo2019convolutional} & 91.5 & $\num{527250}$\\
+                  & MLP$^\dagger$~\cite{nokland2019training} & 91.63 & $\num{2913290}$ \\
+                  & VGG8B~\cite{nokland2019training} & 95.47 & ${\sim\num{7300000}}$\\
+                  & \mbox{F-T DARTS}~\cite{tanveer2021finetuning} & 96.91 & ${\sim\num{3200000}}$\\
+    \hline
+    \multirow{6}{*}{\shortstack[l]{EMNIST\\Balanced~\cite{cohen2017emnist}}} & PMM$^\dagger$ & 81.57 & $\num{13792}$\\
+                    & ConvPMM & 85.95 & $\num{349172}$ \\
+                    \cline{2-4}
+                    %& OPIUM$^\dagger$~\cite{cohen2017emnist} &78.02 & ${\sim\num{8320000}}$\\
+                    & CNN~\cite{Kabir2020} & 79.61 & $\num{21840}$\\
+                    & CNN~\mbox{(S-FC)}~\cite{Kabir2020} & 82.77 & $\num{13820}$\\
+                    & CNN~\mbox{(S-FC)}~\cite{Kabir2020} & 83.21 & $\num{16050}$\\
+                    & HM2-BP$^\dagger$~\cite{Jin2018} & 85.57 & $\num{665647}$\\
+    \hline
+    \multicolumn{4}{l}{$\dagger$ non-convolutional} 
+    \end{tabular}
+    \caption{\label{tbl:ImagePMM}{\bf Supervised machine learning on image datasets.} We show PMM and ConvPMM results compared to other highly efficient methods on several image classification datasets.  We present the accuracy on withheld test sets in percent and the number of trainable floating point parameters.}
+    \egroup
+    \end{minipage}%
+    \hfill
+    \begin{minipage}[b]{0.53\linewidth}
+    \bgroup
+    \def\arraystretch{1.3}
+    \centering
+    %\begin{tabular}{l | S[table-format=6.0] l | S[table-format=6.0] l}
+    \begin{tabular}{l S[table-format=6.0] l S[table-format=6.0] l}
+    \hline
+     %& \multicolumn{2}{c|}{{\textbf{PMM}}} & \multicolumn{2}{c}{{\textbf{FNN}}}\\
+     & \multicolumn{2}{c}{{\textbf{PMM}}} & \multicolumn{2}{c}{{\textbf{FNN}}}\\
+    \textbf{Dataset} & {\textbf{\texttt{float}}} & {\textbf{Accuracy}} & {\textbf{\texttt{float}}} & {\textbf{Accuracy}} \\
+    \hline
+    CIFAR-10~\cite{cifar} &  95176 & $\asymunc{83.06}{0.17}$ & 271178 & $\asymunc{83.68}{0.19}{0.45}$\\
+    %\hline
+    CIFAR-100~\cite{cifar} &  115570 &  $\asymunc{56.17}{0.23}$ & 277028 & $\asymunc{55.05}{0.66}$ \\
+    %\hline
+    SVHN~\cite{SVHN} &  206920 & $\asymunc{65.28}{0.20}{0.46}$ & 271178 &  $\asymunc{65.22}{0.35}$ \\
+    %\hline
+    STL-10~\cite{STL} &  66880 &  $\asymunc{86.14}{0.40}$ & 271178 & $\asymunc{85.94}{0.17}$\\
+    %\hline
+    Caltech256~\cite{Caltech256} &  227207 & $\asymunc{68.1}{1.0}{1.4}$ & 287233 &  $\asymunc{77.15}{0.44}$ \\
+    %\hline
+    CINIC-10~\cite{CINIC} &  66880 &  $\asymunc{72.93}{0.11}{0.16}$ & 271178 & $\asymunc{72.91}{0.23}{0.10}$\\
+    \hline
+    \end{tabular}
+    \caption{\label{tbl:resnet50}{\bf Hybrid transfer learning results for ResNet50 combined with either a PMM or a feedforward neural network (FNN) head.}  Each model was randomly initialized $\num{10}$ times and trained for $\num{10}$ epochs. The mean test accuracy over the trials are reported alongside the number of trainable floating point parameters. The pre-trained ResNet50 network uses $\sim23\times10^6$ trainable parameters.}
+    \egroup
+    \end{minipage}
+\end{table}
+
+%While we have thus far focused on standalone applications of PMMs, we expect there to be significant community interest in combining PMMs with other machine learning algorithms that have already demonstrated excellent performance and computational scaling for a given class of machine learning problems.  To demonstrate this application, our fifth benchmark is a hybrid machine learning model for image recognition, where a pre-trained convolutional neural network called ResNet50~\cite{he2015deep} is combined with a PMM.  ResNet50 is used as a feature extractor and the PMM is used as a trainable classifier on these extracted features. The PMMs used were of the same form as those used for the regression experiments. The $\num{2048}$ outputs of the spatially-pooled ResNet50 network form the input features and the $\softmax$ of the outputs form the class probability predictions. The number, rank, and size of matrices in the PMMs were chosen to accommodate the complexity, size, and number of classes in each dataset.  Further details can be found in Methods.  In Table~\ref{tbl:resnet50}, we show hybrid machine learning results obtained for several different image datasets when combining ResNet50 with either a PMM or a feedforward neural network (FNN).   We have performed $\num{10}$ trials for each dataset with $\num{10}$ training epochs each, and reported the mean test accuracy and number of trainable floating point parameters for each dataset and model.  We see that PMMs can match the performance of FNNs with significantly fewer trainable parameters.
+
+While we have thus far focused on standalone applications of PMMs, we expect there to be significant community interest in combining PMMs with other machine learning algorithms that have already demonstrated excellent performance and computational scaling. To demonstrate this application, we formulate a convolutional PMM (ConvPMM) by using the aforementioned image classification PMM to replace the head of several traditional, but complex-valued, convolutional neural network model architectures. All parameters in the ConvPMM, both the convolutional layers and the PMM head, can be trained simultaneously via backpropagation. The results for this model are also reported in Table~\ref{tbl:ImagePMM} and demonstrate that traditional techniques can be combined with PMMs to achieve highly accurate and efficient models. Further details on the ConvPMM architecture are found in Methods.
+
+To further demonstrate the hybrid compatibility of PMMs with existing neural networks---as well as to apply PMMs to larger and more complex image datasets---our fifth benchmark is a hybrid transfer learning model for image recognition, where a pre-trained convolutional neural network called ResNet50~\cite{he2015deep} is combined with a PMM.  ResNet50 is used as a feature extractor and the PMM is used as a trainable classifier on these extracted features. The PMMs used were of the same form as those used for the regression experiments. The $\num{2048}$ outputs of the spatially-pooled ResNet50 network form the input features and the $\softmax$ of the outputs form the class probability predictions. The number, rank, and size of matrices in the PMMs were chosen to accommodate the complexity, size, and number of classes in each dataset.  Further details can be found in Methods.  In Table~\ref{tbl:resnet50}, we show hybrid transfer learning results obtained for several different image datasets when combining ResNet50 with either a PMM or a feedforward neural network (FNN).   We have performed $\num{10}$ trials for each dataset with $\num{10}$ training epochs each, and reported the mean test accuracy and number of trainable floating point parameters for each dataset and model.  We see that PMMs can match the performance of FNNs, despite using significantly fewer trainable parameters.
+
+
+We have presented parametric matrix models, a new class of machine learning algorithms based on matrix equations and observables in quantum physics.  PMMs have shown superior performance for several different scientific computing applications.  The performance advantage over other machine learning methods is likely due to at least two major factors.  The first is that PMMs can be designed to incorporate important mathematical structures such as operator commutation relations associated with the physical problem of interest.  The second is that PMMs produce output functions with analytical properties determined by the eigenvalues and eigenvectors of the primary matrices.  Using the properties of sharp avoided level crossings, PMMs are able to reproduce abrupt changes in data without also producing the unwanted oscillations typically generated by other approaches.
+
+While there are numerous studies that combine classical machine learning with quantum computing algorithms \cite{schuld2015introduction,biamonte2017quantum,ciliberto2018quantum}, PMMs use the matrix algebra of quantum mechanics as its native language.  This unusual design also sets PMMs apart from other physics-inspired and physics-informed machine learning approaches \cite{raissi2019physics,karniadakis2021physics,schuetz2022combinatorial}.  Rather than imposing auxiliary constraints on the output functions, important mathematical structures such as symmetries, conservation laws, and operator commutation relations can be built into the underlying matrix equations.  Once gate fidelity and qubit coherence are of sufficient quality for the operations required, PMMs can be implemented using techniques similar to those used in a field of quantum computing algorithms called Hamiltonian learning \cite{granade2012robust,wiebe2014hamiltonian,Wang:2017ilm}.  Although the primary computational advantage of PMMs is in the area of scientific computation, we have also shown that PMMs are universal function approximators that can be applied to general machine learning problems such as image recognition and readily combined with other machine learning approaches.  For general machine learning problems, we have found that PMMs are competitive with or exceed the performance of other machine learning approaches when comparing accuracy versus number of trainable parameters.  While the performance of PMMs for extremely large models has not yet been investigated, the demonstrated efficiency and hybrid compatibility of PMMs show the value of PMMs as a new tool for general machine learning.
+\vspace{1em}
+
+\noindent {\bf \large Acknowledgments}
+We are grateful for discussions with Pablo Giuliani and Kyle Godbey, who have been developing methods that combine reduced basis methods with machine learning, and they have written several papers with collaborators since the posting of our original manuscript \cite{Somasundaram:2024zse,Reed:2024urq}.  We also thank Scott Bogner, Wade Fisher, Heiko Hergert, Caleb Hicks, Yuan-Zhuo Ma, Jacob Watkins, and Xilin Zhang for useful discussions and suggestions. This research is supported in part by U.S. Department of Energy (DOE) Office of Science grants DE-SC0024586, DE-SC0023658 and DE-SC0021152. P.C.\ was partially supported by the U.S. Department of Defense (DoD) through the National Defense Science and Engineering Graduate (NDSEG) Fellowship Program. M.H.-J.\ is partially supported by U.S.\ National Science Foundation (NSF) Grants PHY-1404159 and PHY-2310020. Da.L.\ is partially supported by the National Institutes of Health grant NINDS (1U19NS104653) and NSF grant IIS-2132846. De.L.\ is partially supported by DOE grant DE-SC0013365, NSF grant PHY-2310620, and SciDAC-5 NUCLEI Collaboration. \\
+\\
+\begin{comment}
+% This is not needed until journal submission
+%
+\noindent {\bf \large Author Contributions} ...\\
+\\
+\noindent {\bf \large Code Availability} ...\\
+\\
+\noindent {\bf \large Data Availability} ...\\
+\\
+\noindent {\bf \large Competing Interest Statement} 
+The authors declare no competing financial interests.\\
+\\
+\noindent {\bf \large Inclusion and Ethics} We have complied with community standards for authorship and all relevant recommendations with regard to inclusion and ethics.
+\\
+\\
+\noindent {\bf \large Corresponding Author} ...
+\end{comment}
+
+\newpage
+\section*{Methods}
+\renewcommand{\thesection}{S\arabic{section}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\theequation}{S\arabic{equation}}
+\renewcommand{\thetable}{S\arabic{table}}
+\setcounter{figure}{0}
+\setcounter{equation}{0}
+\setcounter{section}{0}
+\setcounter{table}{0}
+
+As most of the variables in the Methods are vectors and matrices, often with additional indices for labeling, we do not use boldface to indicate vectors and matrices.  Whether an object is a scalar, vector, or matrix should be inferred from the context. Additional notation will be used to clearly distinguish trainable-, fixed-, and hyper-parameters. Trainable parameters will be denoted by an underline, $\train{x}$. Hyperparameters will be denoted by an overline, $\hyper{\eta}$. And parameters fixed by the problem or data are written plainly, $s$. Optimization can be accomplished by a global optimizer if the PMM is small enough or, in general, a modified version of the Adam gradient descent method~\cite{kingma2017adam} for complex parameters---as we have chosen in this work.
+
+
+
+\section{Properties of PMMs}\label{sec:prop_of_pmm}
+
+As described in the main text, the basic PMM form consists of primary matrices, $P_j$, and secondary matrices, $S_k$.  All of the matrix elements of the primary and secondary matrices are analytic functions of the set of input features, $\mathset{c_l}$.  The primary matrices are square Hermitian or unitary matrices, and their normalized eigenvectors, $v^{(i)}_j$, are used to form bilinears with secondary matrices of the appropriate row and column dimensions to form scalar outputs of the form $v^{(i)\dagger}_j S_k v^{(i')}_{j'}$. Making an analogy with quantum mechanics, we can view the set of eigenvectors used in a PMM as describing the possible quantum states of a system.  The primary matrices $P_j$ are quantum operators simultaneously being measured, resulting in the collapse onto eigenvectors of the measured operators.  The secondary matrices correspond to observables that measure specific properties of the quantum state or transitions between different quantum states.  If we ignore the irrelevant overall phase of each eigenvector, the total number of real and imaginary vector components that comprise the eigenvectors used in the PMM should be viewed as the number of dimensions of the latent feature space.  This is analogous to the minimum number of nodes contained within one layer of a neural network.  
+
+Given the fundamental structural differences between PMMs and neural networks, a detailed comparison of the two approaches is not straightforward.  The output functions of neural networks do not correspond to the solutions of any known underlying equations.  Rather, they are nested function evaluations of linear combinations of activation functions. Many commonly-used activation functions have different functional forms for $x < 0$ and $x \ge 0$ and therefore are not amenable to analytic continuation.  Most of the other commonly-used activation functions involve logarithmic or rational functions of exponentials, resulting in an infinite number of non-analytic points when continued into the complex plane.
+
+Let us consider a PMM that uses Hermitian primary matrices with matrix elements that are polynomials of the input features up to degree $D$. Suppose now that we vary one input feature, $c_l$, while keeping fixed all other input features.  The output functions of $c_l$ can be continued into the complex plane, with only a finite number of exceptional points where the 
+functions are not analytic.  These exceptional points are branch points where two or more eigenvectors coincide.  A necessary condition for such an exceptional point is that the characteristic polynomial of one of the primary matrices, $\det [\lambda \mathbb{I}-P_j(\{c_l\})]$, has a repeated root.  This in turn corresponds to the discriminant of the characteristic polynomial equaling zero.  If the primary matrix has $n \times n$ entries, the discriminant is a polynomial function of $c_l$ with degree $n(n-1)D$. We therefore have a count of $n(n-1)D$ branch points as a complex function of $c_l$ for each primary matrix.  If a branch point comes close to the real axis, then we have a sharp avoided level crossing and the character of the output function changes abruptly near the branch point.  Our count of $n(n-1)D$ branch points for each primary matrix gives a characterization of the Riemann surface complexity for the functions that can be expressed using a PMM.
+
+For the case where the primary matrix is a unitary matrix, we can restrict our analysis to unitary matrices close to the identity and write $U = \exp(-iM)$, where $M$ is a Hermitian matrix.  If we have a multiplicative parameterization for $U$ of the form $U = \prod_l U_l$, then we can write $\exp(-iM) = \prod_l \exp(-iM_l)$ and use the Baker-Campbell-Hausdorff expansion to relate $M$ to the products and commutators of $M_l$.  This analysis is analogous to parameterizing the algebra of a Lie group.
+
+A detailed characterization of analytic structure is not possible for neural network output functions. However, we can make the qualitative statement that neural network output functions reflect a change in slope, in some cases quite abruptly, as each of the activation function used in the network crosses $x=0$.  We can therefore compare our estimate of $n(n-1)D$ branch points for each primary matrix with the number of network nodes with activation functions.
+
+\subsection{Computational and Parameter Scaling}
+
+An instructive comparison between artificial neural networks and PMMs can be made in the computational complexity of a single inference calculation as well as in the scaling of the number of trainable parameters. Consider the case where there are $p$ input features and $q$ output values. A simplified MLP with $l$ hidden layers each composed of $m$ neurons requires $\bigO{lm^2}$ floating point multiplication operations to perform a single inference. Similarly, the same MLP is described by $\bigO{lm^2}$ trainable floating point values.
+
+We compare the scaling of this simplified MLP with the two types of PMMs considered in this work, the affine eigenvalue PMM (AE-PMM) detailed in Methods Section~\ref{sec:energy_obv_method} and the more general affine observable PMM (AO-PMM) detailed in Methods Section~\ref{sec:methods_reg_class}. In either form, let the primary matrix of the PMMs be $\nxn{n}$.
+The computation of the full spectrum of the primary matrix in both forms requires $\bigO{n^3}$ multiplication operations in practice. However, if only a small subset of the spectrum, $r$ levels, is required then this complexity reduces to $\bigO{rn^2}$. In the case that the eigenvalues are the outputs, then $r=q$. In the case of the AO-PMM, in which each output is formed from taking bilinears of these $r$ eigenvectors with $\sim qr^2$ secondary matrices, the number of multiplication operations is $\bigO{qr^2n^2}$. The affine eigenvalue PMM need only store the $\bigO{pn^2}$ trainable values in the primary matrix. In contrast, the scaling of the number of trainable parameters in the AO-PMM is jointly dominated by the number of elements in the trainable secondary matrices; so the number of trainable parameters is $\bigO{\left(p+qr^2\right)n^2}$.
+
+These scaling results are summarized in Table~\ref{tbl:methods_scaling} and allow for further analogies to be made between standard size hyperparameters in neural networks and PMMs. We see that, in the context of expressivity, the dimension of the PMM matrices, $n$, plays the same role as both the width and depth of the MLP. However, in the context of both the inference complexity and the number of trainable parameters for both PMM formulations, the dimension of the matrices functions comparably to only the width of the MLP. In the case of the AE-PMM, the number of outputs and number of input features each affect the scaling of the inference complexity and model size respectively in the same way that the number of layers in the MLP does. We note that these quantities are fixed by the problem and thus the scaling of all relevant quantities of the AE-PMM are determined by a single hyperparameter, $n$. This single-hyperparameter property can be both an advantage---encouraging model simplicity---or a disadvantage, for example when more control over the model is desired or the number of input features is large. This disadvantage motivates the AO-PMM, for which the quantity $p+qr^2$ acts similarly to the number of layers in the MLP in the scaling of the complexity and number of trainable parameters. While this introduces an additional hyperparameter, it is important to note that $r$ and $n$ are not independent as $r$ must be less than or equal to $n$. Furthermore, typical values of $m$, $l$, and analogous hyperparameters for other neural networks like CNNs are in the range of $\bigO{10^1}$ to $\bigO{10^4}$. Such a wide range of possible values even for modest network sizes necessitates expensive hyperparameter optimization or aggressive model crafting. The analogous hyperparameters in PMMs have an extremely limited range by comparison with typical values of $n$ and $r$ in the ranges of \numrange[range-phrase = --]{5}{25} and \numrange[range-phrase = --]{1}{5} respectively.
+
+Additional control over the scaling of PMMs can be gained by specifying the rank of the trainable matrices. By using low-rank matrices---as we have done for several of the examples in this work---the model can be made significantly more efficient. This is analogous to sparse layers and sparsity-promoting regularization in neural networks.
+
+\begin{table}
+\SetTblrInner{rowsep=1pt}
+\centering
+\begin{tblr}{lccc}
+\hline
+\textbf{Quantity} & \textbf{MLP} & \textbf{AE-PMM} & \textbf{AO-PMM} \\
+\hline
+Non-analytic points & $lm$ & $n^2$ & $n^2$\\
+Inference complexity & $lm^2$ & $qn^2$ & $qr^2n^2$ \\
+Trainable parameters & $lm^2$ & $pn^2$ & $\left(p+qr^2\right)n^2$ \\
+\hline
+\end{tblr}
+\caption{\label{tbl:methods_scaling}\textbf{Leading-order scaling for various properties of a fixed-width MLP and PMMs.} The two kinds of PMMs considered in this work are shown: the affine eigenvalue PMM (AE-PMM, Methods Section~\ref{sec:energy_obv_method}) and the affine observable PMM (AO-PMM, Methods Section~\ref{sec:methods_reg_class}). All models are considered to have $p$ input features and $q$ output values. Each of the $l$ hidden layers of the MLP has $m$ neurons. The size of the matrices in the PMMs is $\nxn{n}$ and the number of eigenvectors used in the AO-PMM is denoted by $r$.}
+\end{table}
+
+\section{Eigenvalue and Eigenstate Observable Emulation} \label{sec:energy_obv_method}
+The simplest PMM in the context of emulating Hamiltonian systems is that of the affine PMM used for emulating energies and eigenstate properties. By affine, we mean that the dependence of the matrix elements on the input features is at most linear. Suppose the true underlying system is described by a Hamiltonian which is a function of $p$ features, $\mathset{c_l : 1\leq l \leq p}$. Given data for some subset of the energy levels at some values of these parameters, we can emulate the energies with the following affine PMM,
+\begin{equation}
+    \label{eq:methods_affinePMM}
+    M\left(\mathset{c_l}\right) = \train{M_0} + \sum\limits_{l=1}^p c_l\train{M_l},
+\end{equation}
+where $\train{M_l}$ are $p+1$ independent $\nxn{\hyper{n}}$ Hermitian matrices.  When the PMM has this simple form and the output function is a set of eigenvalues of $M\left(\mathset{c_l}\right)$, we will refer to the PMM as an affine eigenvalue PMM (AE-PMM).  An eigenvalue as a PMM output can be viewed as the expectation value of a secondary matrix that is the same as the primary matrix that produced the eigenvector.  
+The hyperparameter $\hyper{n}$ must be chosen to be large enough to accommodate all of the levels provided in the data as well as the degrees of freedom required by the data. The elements of each $\train{M_l}$ are found by optimizing the mean squared error between the data and the eigenvalues of $M$ evaluated at the corresponding values of $\mathset{c_l}$. A suitable mapping between the energy levels of the PMM and the true levels must be used. Typically, the provided data contains some number of the lowest lying energies of the true system, in which case the mapping can be the identity. That is, the ground state of the PMM is compared with the ground state data, the first excited state of the PMM is compared with the first excited state data, and so on. More complex mappings may be used in the case that the data contain arbitrary energy levels.
+
+This PMM can be trivially extended to emulate observables measured in the eigenstates of the original Hamiltonian as a function of the same $\mathset{c_l}$. Given data for some number of observables measured in some subset of the eigenstates of the original Hamiltonian, the PMM can accommodate this new information via the introduction of a new secondary matrix for each observable in the data, $\train{O_k}$. The loss function is modified to include the mean squared error between the data and expectation values of these secondary matrices in corresponding eigenstates of the PMM primary matrix. Weighting hyperparameters which control the strength of the energy error and observable error terms in the loss function may be included to further control the learning of the PMM.
+
+As mentioned in the main text, a simple and physically motivated regularizer arises naturally in this formulation. In most physical systems, one expects the eigenstates to change smoothly as a function of the Hamiltonian input features. Equivalently, one expects the overlap between an eigenstate at some level for some values of the Hamiltonian input features with the eigenstate for the same level at nearby values of the Hamiltonian input features to have magnitude near unity. We can encourage this behavior by adding a penalty term to the loss function which is proportional to the difference between neighboring eigenstate overlaps and unity. Let $v$ be the vector whose entries are $1-\abs{\braket{\psi_i\left(\mathset{c_l}\right)|\psi_i\left(\mathset{c_l + \delta c_l}\right)}}^2$, where $\ket{\psi_i}$ is the $i^{\mathrm{th}}$ eigenstate of the PMM, for all levels and feature space areas of interest. Then the penalty $\hyper{\gamma}\left\Vert v \right\Vert_{\hyper{\alpha}}^{\hyper{\alpha}}$ can be added to the previous loss function to encourage the smoothness of the eigenstates. Here, $\left\Vert \cdot \right\Vert_{\hyper{\alpha}}^{\hyper{\alpha}}$ is the $l^{\hyper{\alpha}}$ norm, where $\hyper{\alpha}$ can be chosen to elicit the desired behavior. Most commonly, $\hyper{\alpha}=1$ encourages a few number of locations where the eigenstates are not smooth and $\hyper{\alpha}=2$ encourages a high average smoothness. Finally, it may be beneficial to modify the elements of $v$ by normalizing them by each $\mathset{\delta c_l}$, as we have chosen to do in our implementation. 
+
+\section{Universal Approximation Theorem for PMMs}
+\label{sec:univeral_approximation}
+In Section~\ref{sec:energy_obv_method} of Methods, we discussed an affine eigenvalue PMM composed of one primary matrix that is a Hermitian matrix whose matrix elements are at most linear functions of the input features, $\mathset{c_l}$, and whose output corresponds to one particular eigenvalue of the primary matrix.  In this section, we prove that even this most basic PMM is a universal function approximator.  In more precise terms, we prove that for any compact domain of the input features, any uniform error tolerance $\epsilon > 0$, and any continuous real-valued function $f(\{c_l\})$, we can find an affine eigenvalue PMM that reproduces $f(\{c_l\})$ over the compact domain with uniform error less than $\epsilon$.
+
+We start by proving an addition theorem for affine eigenvalue PMMs.  Suppose that we have two AE-PMMs with output functions $f(\{c_l\})$ and $g(\{c_l\})$ corresponding to eigenvalues of primary matrices $P_f(\{c_l\})$ and $P_g(\{c_l\})$ respectively.  We can define another affine eigenvalue PMM with output function $f(\{c_l\}) + g(\{c_l\})$ by constructing the tensor product of the two vector spaces and defining the new primary matrix as $P_{f+g}(\{c_l\}) =  P_f(\{c_l\}) \otimes \mathbb{I}  +  \mathbb{I} \otimes P_g(\{c_l\})$.
+
+Next, we prove the universal approximation theorem for affine eigenvalue PMMs with one input feature, $c_1$.  Any continuous function $f(c_1)$ over a compact domain can be uniformly approximated to arbitrary accuracy using a concatenation of line segments with finite slope as shown by the thick line in Fig.~\ref{fig:universal}.  Let us label the line segments as $s_1,\, s_2,\, \ldots, s_M$, where our ordering corresponds to ascending values for $c_1$.  For each line segment, $s_j$, let us write the affine function that passes through $s_j$ as $f_j(c_1) = a_j c_1 + b_j$.  We now construct a Hermitian matrix with the $j^{\rm th}$ diagonal element given by $f_j(c_1)$.  If the off-diagonal elements are all zero, then the eigenvectors are decoupled from each other and the eigenvalues are the affine functions $f_j(c_1)$.  We now make each of the off-diagonal matrix elements an infinitesimal but nonzero constant.  The details are not important except that they mix the eigenvectors by an infinitesimal amount and produce sharp avoided level crossings.  We now assume that each $|a_j|$ is large enough so that $f_j(c_1) = a_j c_1 + b_j$ does not intersect any line segment other than $s_j$.  Let $n_b$ be the total number of affine functions $f_j(c_1)$ that pass below the first segment $s_1$.  We note that for any line segment $s_{j'}$, exactly $n_b$ affine functions $f_j(c_1)$ pass below $s_{j'}$.  We conclude that the $(n_b+1)^{\rm st}$ eigenvalue from the bottom of the spectrum will pass through all of the line segments $s_1, s_2,\,\dotsc,\,s_M$. This completes the proof of the universal function approximation theorem for affine eigenvalue PMMs with a single input feature.        
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{./Figures/universal_approximator.pdf}
+    \caption{\label{fig:universal} {\bf Concatenated line segments for one input feature.}  The thick line shows a particular eigenvalue $\lambda(c_1)$ that traces out a function composed of several concatenated line segments.  The dashed lines show the affine functions $f_j(c_1) = a_j c_1 + b_j$ that describe the line segments. 
+ }
+\end{figure}
+
+We now turn to the case with $p$ input features $c_1,\,\dotsc,\,c_p$ with $p>1$.  Let us consider any monomial $c_1^{k_1} c_2^{k_2} \cdots c_p^{k_p}$ with total degree $k = k_1 + \cdots + k_p$.  We can write the monomial as a finite linear combination of the form
+\begin{equation}
+    c_1^{k_1} c_2^{k_2} \cdots c_p^{k_p} = 
+    \sum_{j=1}^J b_j \left[ \sum_{l=1}^p a_{j,l} c_l \right]^k, \label{eq:monomial}
+\end{equation}
+where $J$ is a finite positive integer and all of the coefficients $b_j$ and $a_{j,l}$ are real numbers.  This follows from the fact that 
+\begin{equation}
+\left[ \sum_{l=1}^p a_{j,l} c_l \right]^k = \sum_{k_1, k_2, \ldots, k_p} \binom{k_1+k_2+\cdots+k_p}{ k_1, k_2, \ldots, k_p} (a_{j,1}^{k_1} a_{j,2}^{k_2} \cdots a_{j,p}^{k_p})(c_1^{k_1} c_2^{k_2} \cdots c_p^{k_p}),
+\end{equation}
+and the functions
+\begin{equation}\binom{k_1+k_2+\cdots+k_p}{k_1, k_2, \ldots, k_p} (a_{j,1}^{k_1} a_{j,2}^{k_2} \cdots a_{j,p}^{k_p})
+\end{equation}
+are linearly independent functions of $\{a_{j,1}, \, a_{j,2}, \, \ldots,\, a_{j,p}\}$ for each distinct set of nonnegative integers $\{k_1,\, k_2, \, \ldots,\, k_p\}$.  For sufficiently large but finite $J$, we can therefore write any homogeneous polynomial of total degree $k$ as a linear combination of $J$ polynomials of the form
+\begin{equation}
+\left\{ \left[ \sum_{l=1}^p a_{1,l} c_l \right]^k, \left[ \sum_{l=1}^p a_{2,l} c_l \right]^k, \ldots, \left[ \sum_{l=1}^p a_{J,l} c_l \right]^k\right\},
+\end{equation}
+where each of the coefficient values $\{a_{j,l}\}$ are fixed.  Further literature on this topic and the minimum integer $J$ required can be found in Ref.~\cite{alexander1995polynomial,terracini1911sulle,kleppe1999representing}.
+
+Each term in the outer sum of Eq.~\ref{eq:monomial} has the form 
+\begin{equation}\label{eq:methods_monomial_outer_terms}
+    b_j \left[ \sum_{l=1}^p a_{j,l} c_l \right]^k.
+\end{equation}
+For each index $j$, this is a function of a single linear combination of input features. We can therefore construct an AE-PMM for each $j$ to uniformly approximate Eq.~\ref{eq:methods_monomial_outer_terms} to arbitrary accuracy.  By the addition theorem for AE-PMMs, we can perform the sum over $j$ and uniformly approximate any monomial $c_1^{k_1} c_2^{k_2} \cdots c_p^{k_p}$ and therefore any polynomial.  By the Stone-Weierstrass theorem \cite{weierstrass1885analytische,stone1948generalized}, we can uniformly approximate any continuous function of the input features $\mathset{c_l}$ over any compact domain using polynomials.  We have therefore proven that any continuous function of the input features $\mathset{c_l}$ over any compact domain can be uniformly approximated to arbitrary accuracy by AE-PMMs.
+
+We define a unitary affine eigenvalue PMM to be a generalization of the affine eigenvalue PMM where the output is an eigenvalue of single primary matrix that is the exponential of the imaginary unit times a Hermitian matrix composed of affine functions of the input features.  The proof of the universal approximation theorem for unitary affine eigenvalue PMMs is analogous to the proof for affine eigenvalue PMMs.  The precise statement is that for any compact domain of the input features, any uniform error tolerance $\epsilon > 0$, and any continuous real-valued function $f(\{c_l\})$, we can find a unitary affine eigenvalue PMM that reproduces $\exp\left[i f\left(\left\{c_l\right\}\right)\right]$ over the compact domain with uniform error less than $\epsilon$.
+
+Analogous to the addition theorem for affine eigenvalue PMMs, we can prove the multiplication theorem for unitary affine eigenvalue PMMs.  Suppose that we have two unitary affine eigenvalue PMMs with output functions $f(\{c_l\})$ and $g(\{c_l\})$ corresponding to primary matrices $P_f(\{c_l\})$ and $P_g(\{c_l\})$ respectively.  We can define another unitary affine eigenvalue PMM with output function $f(\{c_l\})g(\{c_l\})$ by constructing the tensor product of the two vector spaces and defining the new primary matrix as $P_{f\cdot g}(\{c_l\}) =  P_f(\{c_l\}) \otimes P_g(\{c_l\}) $.
+
+For unitary affine eigenvalue PMMs with one input feature $c_1$, the proof of the universal approximation theorem uses exponentials of affine functions multiplied by the imaginary unit.  We assign $f_j(c_1) = \exp\left[i \left(a_j c_1 + b_j\right)\right]$ to the $j^{\rm th}$ diagonal entry of the primary matrix.  Analogous to the monomial $c_1^{k_1} c_2^{k_2} \cdots c_p^{k_p}$ for affine eigenvalue PMMs with more than one input feature, for unitary affine eigenvalue PMMs we approximate the exponentiated monomial $\exp\left(ic_1^{k_1} c_2^{k_2} \cdots c_p^{k_p}\right)$.  The other steps in the proof are straightforward and analogous to the derivations for the affine eigenvalue PMMs. 
+ Having proven that affine eigenvalue PMMs and unitary affine eigenvalue PMMs are universal function approximators, we conclude that all PMMs of the basic form described in the main text with Hermitian or unitary primary matrices are universal function approximators.
+
+\section{Comparison of PMMs and Eigenvector Continuation}
+We consider the problem of finding the eigenvalues and eigenvectors for a family of Hermitian matrices, $H(\mathset{c_l})$, whose elements are analytic functions of real input features, $\mathset{c_l}$.  The reduced basis approach of eigenvector continuation~\cite{DFrame} (EC) is well suited for this problem.  We select some set of eigenvector snapshots at training points $\mathset{\mathset{c^{(1)}_l}, \mathset{c^{(2)}_l}, \cdots }$.  After projecting to the subspace spanned by these snapshots, we solve for the eigenvalues and eigenvectors of the much smaller Hermitian matrix $M(\mathset{c_l})$, whose elements are also analytic functions of $\mathset{c_l}$. 
+ While this works very well for many problems, there is a general problem that reduced basis methods such as EC can lose accuracy for systems with many degrees of freedom. In such cases, the number of snapshots may need to scale with the number of degrees of freedom in order to deliver the same accuracy.  
+
+In the main text, we have noted that PMMs can reproduce the performance of EC by learning the elements of the matrices $M(\{c_l\})$ directly from data.  In the following, we present an example where PMMs perform better than EC for a problem with many degrees of freedom.  We consider a simple system composed of $N$ non-interacting spin-$1/2$ particles with the one-parameter Hamiltonian 
+\begin{equation}\label{eq:nonintH}
+H(c) = \frac{1}{2N}\sum_i^N \left(\sigma^z_i + c\sigma^x_i \right).
+\end{equation}
+Here, $\sigma^z_i$ and $\sigma^x_i$ are the $z$ and $x$ Pauli matrices for spin $i$, respectively. We see in Fig.~\ref{fig:EC_PMM}, that the EC method has difficulties in reproducing the ground state energy $E_0$ for large $N$ using five training points, or snapshots, which here are the eigenpairs obtained  from the  solution  of the full $N$-spin problem.  The PMM representation does not have this problem and is able to exactly reproduce $E_0$ for all $N$ using a learned $\nxn{2}$ matrix model only of the form $M(c) = \left(\sigma^z + c\sigma^x \right)/2$.  While this particular example is a rather trivial non-interacting system, it illustrates the general principle that PMMs have more freedom than reduced basis methods.  They do not need to correspond to a projection onto a fixed subspace, and this allows for efficient solutions to describe a wider class of problems.
+
+It should be noted that for this simple example, the extrapolation problems for the EC calculation can be cured by computing a formal power series expansion around $c=0$ and truncating the series up to any finite order in $c$.  However, it is both notable and convenient that the problem never arises in the PMM framework and so no such additional analysis is needed. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.3\textheight]{./Figures/EC_PMM.pdf}
+    \caption{\label{fig:EC_PMM} {\bf Comparison of PMM and EC results for ground state energy extrapolation.}  We show results for a $2\times 2$ PMM (dashed blue) and EC (dotted red) with $5$ training samples on the task of extrapolating the ground state energy of a system of $N$ non-interacting spins. The exact ground state energy is shown in solid black.}
+\end{figure}
+ 
+\section{Regression and Classification PMMs}\label{sec:methods_reg_class}
+We address the general problem of regression and classification in machine learning where the model learns to reproduce feature-label pairs $\mathset{\left(x_i,\,y_i\right):x_i\in\R^p,\, y_i\in\R^q}$ and generalize to unseen data. Regression and classification are fundamentally the same problem, differentiated only by the nature of the labels $\mathset{y_i}$ and therefore suitable choices of loss functions.
+
+The simplest PMM for this task uses a primary matrix which is affine in the input features, as shown previously in Eq.~\ref{eq:methods_affinePMM}. This is the form we have chosen for our regression experiments as well as our hybrid transfer learning experiments. The form of the primary matrix or matrices can be modified to accommodate known properties of the data, for example the image classification PMM discussed in Methods Section~\ref{sec:methods_imagePMM}.
+
+The first $\hyper{r}$ eigenvectors associated with the largest magnitude eigenvalues form bilinears with Hermitian secondary matrices $\train{\Delta_{kij}}\in\C^{\nxn{\hyper{n}}}$ where $1\leq k \leq q$ and $1 \leq i,j \leq \hyper{r}$ and $\train{\Delta_{kij}} = \train{\Delta_{kji}}$ to produce the output of the PMM. That is, for each output index $k$ and each pair of eigenvector indices $i,j$ there is an independent secondary matrix $\train{\Delta_{kij}}$. These bilinears---which can be thought of as expectation values (transition amplitudes) when $i=j$ ($i\neq j$)---are summed together with a trainable bias vector $\train{g}\in\R^q$ and a fixed bias proportional to the spectral norm of the secondary matrices to form the output of the PMM,
+\begin{equation}\label{eq:methods_decode}
+    z_k = \train{g_k} + \sum_{i, j = 1}^{\hyper{r}}\abs{v^{(i)\dagger} \train{\Delta_{kij}} v^{(j)}}^2 - \frac{1}{2}\norm{\train{\Delta_{kij}}}_2^2.
+\end{equation}
+Equivalently, the sum may be restricted to $i\leq j$ for efficiency. The fixed bias term is a deliberate addition to ensure that the output of the PMM is both unbounded and invariant under suitable unitary transformations of the trainable matrices. This output vector may be augmented by fixed or trainable activation functions, such as the $\softmax$ function in the case of classification.
+
+\subsection{Regression Experiments}\label{sec:Test_functions}
+
+We have compared the performance of PMMs for multivariable function regression against several standard techniques:  Kernel Ridge Regression (KRR), Multilayer Perceptron (MLP), $k$-Nearest Neighbors (KNN), Extreme Gradient Boosting (XGB), Support Vector Regression (SVR), and Random Forest Regression (RFR) (see for example Ref.~\cite{Hastie2009} for many of these methods and \cite{Chen2016} for XGB). We have considered thirteen different two-dimensional test functions as well as two classes of functions (Fourier series and polynomials)
+% (Franke~\cite{Franke1979,Burkardt2016}, Cliff~\cite{Burkardt2016}, Saddle~\cite{Burkardt2016}, Gentle~\cite{Burkardt2016}, Steep~\cite{Burkardt2016}, Sphere~\cite{Burkardt2016}, Trigonometric~\cite{Burkardt2016}, Gaussians~\cite{Burkardt2016}, Cloverleaf~\cite{Burkardt2016}, Cosine Peak~\cite{Burkardt2016}, Bilinear~\cite{Burkardt2016}, Vicente Romero~\cite{Burkardt2016,Romero2006}, Runge~\cite{Burkardt2016,Runge1901}, Fourier series, and Polynomials) 
+with exact forms given in Table~\ref{tab:math_functions}. For these functions the dataset consisted of a $\num{200}$ point training set sampled from a uniform distribution and $\num{10000}$ point test set drawn from a grid with uniform spacing. For the classes of functions, $\num{1000}$ functions were sampled and the mean performance for each model is reported. For each experiment, $\num{10}\%$ of the training set was used a validation set for the PMM, where the full training set was used for the other machine learning models optimized using cross-validation and grid search for hyperparameter tuning. 
+For the thirteen test functions (two classes of functions) a $\nxn{7}$ ($\nxn{9}$) primary matrix with $\hyper{r}=3$ PMM was tested against the other machine learning models. Finally, two standard regression datasets consisting of real-world data---the NASA airfoil~\cite{NASA_airfoil} and CERN dielectron~\cite{CERN2014} datasets---were used to test the performance of PMMs. For these datasets, $\num{35}\%$ of the data was used as the training set. For the NASA (CERN) dataset a $\nxn{7}$ ($\nxn{15}$) primary matrix with $\hyper{r}=3$ PMM was used.
+
+\begin{table}[H]
+\SetTblrInner{rowsep=2pt}
+\centering
+\begin{tblr}{lc}
+\hline
+\textbf{Name} & \textbf{Equation} \\
+\hline
+Franke$^\dagger$~\cite{Franke1979,Burkardt2016} &
+$\begin{aligned}
+        &\frac{3}{4} \exp \left\{ -\frac{(9x - 2)^2 + (9y - 2)^2}{4} \right\} + \frac{3}{4} \exp \left\{ -\frac{(9x + 1)^2}{49} - \frac{9y + 1}{10} \right\} \\
+        &+ \frac{1}{2} \exp \left\{ -\frac{(9x - 7)^2 + (9y - 3)^2}{4} \right\} - \frac{1}{5} \exp \left\{ -(9x - 4)^2 - (9y - 7)^2 \right\}
+\end{aligned}$\\
+\hline
+Cliff$^\dagger$~\cite{Burkardt2016} &
+$\begin{aligned}\tfrac{1}{9}\tanh [ 9 ( y - x ) ] + \tfrac{1}{9}\end{aligned}$\\
+\hline
+Saddle$^\dagger$~\cite{Burkardt2016} &
+$\begin{aligned}
+    \frac{ 5/4 + \cos ( 27y/5 ) }{ 6 + 6 ( 3 x - 1 )^2 }
+\end{aligned}$\\
+\hline
+Gentle$^\dagger$~\cite{Burkardt2016} &
+$\begin{aligned}
+    \tfrac{1}{3}\exp \left\{ - \alpha \left[ \left( x - \tfrac{1}{2} \right)^2 + \left( y - \tfrac{1}{2} \right)^2 \right] \right\}, \quad \alpha=81/16
+\end{aligned}$\\
+\hline
+Steep$^\dagger$~\cite{Burkardt2016} &
+$\begin{aligned}
+    \tfrac{1}{3}\exp \left\{ - \alpha \left[ \left( x - \tfrac{1}{2} \right)^2 + \left( y - \tfrac{1}{2} \right)^2 \right] \right\}, \quad \alpha=81/4
+\end{aligned}$\\
+\hline
+Sphere$^\dagger$~\cite{Burkardt2016} &
+$\begin{aligned}
+    -\tfrac{1}{2} + \sqrt{\left(\tfrac{8}{9}\right)^2 - \left(x - \tfrac{1}{2}\right)^2 - \left(y - \tfrac{1}{2}\right)^2}\\
+\end{aligned}$\\
+\hline
+Trigonometric$^\dagger$~\cite{Burkardt2016} &
+$\begin{aligned}
+    2 \cos ( 10 x ) \sin ( 10 y ) + \sin ( 10 x y )
+\end{aligned}$\\
+\hline
+Gaussians$^\dagger$~\cite{Burkardt2016} &
+$\begin{aligned}
+    \exp \left\{ -u^2/2 \right\} + \tfrac{3}{4}\exp \left\{ -v^2/2 \right\} \left[ 1 + \exp \left\{ -u^2/2 \right\} \right], \quad \left\{\begin{aligned}u &= 5-10x\\ v &= 5-10y\end{aligned}\right.
+\end{aligned}$\\
+\hline
+Cloverleaf$^\dagger$~\cite{Burkardt2016} &
+$\begin{aligned}
+        \left[\left( \frac{20}{3} \right)^3 uv\right]^2 \left[\left( \frac{1}{1 + u} \right) \left( \frac{1}{1 + v} \right)\right]^5\left[ u - \frac{2}{1 + u} \right]\left[ v - \frac{2}{1 + v} \right], \quad \left\{\begin{aligned}
+        u &= \exp\left\{\frac{10 - 20x}{3}\right\}\\
+        v &= \exp\left\{\frac{10 - 20y}{3}\right\}
+        \end{aligned}\right.
+\end{aligned}$\\
+\hline
+Cosine Peak$^\dagger$~\cite{Burkardt2016} &
+$\begin{aligned}
+    &\exp \left\{ -\tfrac{2}{5} r \right\} \cos\left(\tfrac{3}{2} r\right), \quad r = \sqrt{(8x-4)^2+\left(9y-\tfrac{9}{2}\right)^2}
+\end{aligned}$\\
+\hline
+Bilinear$^\dagger$~\cite{Burkardt2016} &
+$\begin{aligned}
+    xy + x
+\end{aligned}$ \\
+\hline
+Vicente Romero$^\dagger$~\cite{Romero2006,Burkardt2016} &
+$\begin{aligned}
+    \frac{6}{5}r + \frac{21}{40} \sin \left( \frac{12\pi}{5\sqrt{2}} r \right) \sin\left[\frac{13}{10} \atantwo(y, x)\right],\quad r = \sqrt{x^2 + y^2}
+\end{aligned}$\\
+\hline
+Runge$^\dagger$~\cite{Runge1901,Burkardt2016} &
+$\begin{aligned}
+    \left[(10x - 5)^2 + (10y - 5)^2 + 1 \right]^{-1}
+\end{aligned}$\\
+\hline
+Fourier series$^\ddagger$ &
+$\begin{aligned}
+    \sum_{n=1}^{N} \sum_{m=1}^{M} \left[ a_{nm} \sin \left( \frac{n \pi x}{3} \right) \sin \left( \frac{m \pi y}{3} \right) + b_{nm} \cos \left( \frac{n \pi x}{3} \right) \cos \left( \frac{m \pi y}{3} \right) \right], \quad a_{nm}, b_{nm} \sim \mathcal{N}(0,1)
+\end{aligned}$\\
+\hline
+Polynomials$^\ddagger$ &
+$\begin{aligned}
+    \sum_{n=0}^{N} \sum_{m=0}^{M} a_{nm} x^n y^m, \quad a_{nm}\sim\mathcal{N}(0,1)
+\end{aligned}$\\
+\hline
+$\dagger$ $(x,y)\in[0,1]\times[0,1]$ \\
+$\ddagger$ $(x,y)\in[-1,1]\times[-1,1]$
+\end{tblr}
+\caption{\label{tab:math_functions}\textbf{Collection of mathematical functions used for testing regression performance.} A value, $a$, drawn from a normal distribution with mean $\mu$ and standard deviation $\sigma$ is denoted by $a\sim\mathcal{N}(\mu,\sigma)$.}
+\end{table}
+\subsection{Image Classification PMM}
+\label{sec:methods_imagePMM}
+To maximize efficiency in the task of image classification, we reformulate the primary matrices of the PMM to take advantage of the properties of images. A typical non-convolutional method will take the input features to be the vectorized, or flattened, images. Instead, we consider surrogates for the row-wise and column-wise correlation matrices of fixed windows of the images. This formulation yields a natural interpretation of images as the principle components of their constituent windows.
+
+Given a grayscale image $X\in\R^\nxm{n}{m}$---or a color image whose color channels are compressed to two components using a method such as Independent Component Analysis and encoded as the real and imaginary parts of complex numbers, $X\in\C^\nxm{n}{m}$---we select $\hyper{w}$ windows of shape $\nxm{\hyper{s_l}}{\hyper{t_l}},\, l = 1, 2,\ldots,\hyper{w}$ from the image. The area of the image that these windows cover can overlap or be entirely disjoint. For each window, we use the associated part of the image, $W_l\in\C^\nxm{\hyper{s_l}}{\hyper{t_l}}$, to calculate the row-wise and column-wise Gram matrices, $W_lW_l^\dagger$ and $W_l^\dagger W_l$ respectively, as efficient surrogates for the row-wise and column-wise correlation matrices. These matrices are uniformly normalized element-wise such that the maximum magnitude of the entries is $1.0$ before finally the diagonal elements are set to unity. Denote these post-normalized matrices by $R_l\approxpropto W_lW_l^\dagger\in\C^\nxn{\hyper{s_l}}$ and $C_l\approxpropto W_l^\dagger W_l\in\C^\nxn{\hyper{t_l}}$. These Hermitian matrices encode much of the information of the original image. This process of encoding the image as a set of $R_l$ and $C_l$ can be done either as a preprocessing step or included in the inference process of the PMM. This allows the PMM to be trained efficiently while still being able to operate on new previously-unseen data.
+
+Using this Hermitian matrix encoding for images, we form the primary matrices of the image classification PMM in two steps. First, for each window we apply a quasi-congruence transformation using a trainable matrix $\train{K_l}\in\C^\nxm{\hyper{a}}{\hyper{s_l}}$ ($\train{L_l}\in\C^\nxm{\hyper{a}}{\hyper{t_l}}$) to $R_l$ ($C_l$) and sum over the windows to form a single Hermitian matrix, $M\in\C^\nxn{\hyper{a}}$, which contains the latent-space features of the image,
+\begin{equation}
+    M = \sum_l^{\hyper{w}} \train{K_l}R_l\train{K_l}^\dagger + \train{L_l}C_l\train{L_l}^\dagger.
+\end{equation}
+We describe the terms $K_l R_l K_l^\dagger$ and $L_l C_l L_l^\dagger$ as quasi-congruence transformations since $K_l$ and $L_l$ are not necessarily square matrices and thus these transformations are not exactly congruence transformations. With $M$ constructed, we apply another quasi-congruence transformation for each possible class output using trainable matrices, $\train{D_k}\in\C^\nxm{\hyper{b}}{\hyper{a}}$, and add trainable Hermitian bias matrices, $\train{B_k}\in\C^\nxn{\hyper{b}}$, to form a primary matrix for each output,
+\begin{equation}
+    H_k = \train{D_k}M\train{D_k}^\dagger + \train{B_k},\quad k = 1, 2, \ldots, q.
+\end{equation}
+These primary matrices represent the latent-space class-specific features of the image. The eigensystems of these primary matrices are used to form predictions in a nearly identical way to the regression PMM shown in Eq.~\ref{eq:methods_decode}. However, for the image classification PMM described thus far the bilinears with the trainable secondary matrices need to account for the $q$ different primary matrices and so Eq.~\ref{eq:methods_decode} becomes
+\begin{equation}
+    z_k = \train{g_k} + \sum_{i, j = 1}^{\hyper{r}}\abs{v_k^{(i)\dagger} \train{\Delta_{kij}} v^{(j)}_k}^2 - \frac{1}{2}\norm{\train{\Delta_{kij}}}_2^2,\quad k = 1, 2, \ldots, q,
+\end{equation}
+where $v_k^{(i)}$ is the $i^\mathrm{th}$ eigenvector for primary matrix $H_k$. Finally, these outputs are converted to predicted class probabilities by means of a standard $\softmax$ with temperature $\hyper{\tau}$,
+\begin{equation}
+\rho_k = \softmax\left(z_k/\hyper{\tau}\right) = \frac{\exp(z_k/\hyper{\tau})}{\sum_{k'=1}^q \exp(z_{k'}/\hyper{\tau})}.
+\end{equation}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\linewidth]{./Figures/diagram.pdf}
+    \caption{\label{fig:methods_imagepmm} {\bf Diagram of the image classification PMM algorithm.} We conceptually illustrate the inference process of the image PMM in the context of classifying images of dogs and cats. We start with the original image divided into four rectangular windows, $W_1,\ldots,W_4$, with trainable quasi-congruence transformation matrices $\left\{\train{K_1}, \train{L_1}\right\},\ldots,\left\{\train{K_4},\train{L_4}\right\}$. From each window the normalized row- and column-wise Gram matrices, $R_1,\ldots,R_4$ and $C_1,\ldots,C_4$, are calculated and summed to form the latent space feature encoding matrix $M$. Additional trainable quasi-congruence transformation matrices, $\train{D_1}$ and $\train{D_2}$, are applied and added to trainable Hermitian bias matrices, $\train{B_1}$ and $\train{B_2}$, to form the class-specific latent-space feature matrices, $H_1$ and $H_2$, which are the primary matrices of the PMM. Finally, the eigensystem of these primary matrices are used to form bilinears with the secondary matrices of the PMM before finally a $\softmax$ is applied to convert the predictions to probabilities.}
+\end{figure}
+This image classification PMM algorithm is summarized diagrammatically in Fig.~\ref{fig:methods_imagepmm} for the example of a $q=2$ class dataset.
+
+\subsection{Convolutional Image Classification PMM}
+
+We demonstrate the ability for existing neural network methods to be combined with PMMs, including the ability for gradients to be propagated through the PMM, by constructing and training a convolutional image classification PMM (ConvPMM). The ConvPMM is built on the image classification PMM described in Methods Section~\ref{sec:methods_imagePMM} with the normalization of the row- and column-wise Gram matrices skipped. The ConvPMM uses a trainable complex-valued convolutional neural network to compute filtered complex-valued ``images'' which the image classification PMM then processes. The architecture of the convolutional layers of the ConvPMM used for the MNIST-Digits dataset consisted of four layers of $\num{64}$, $\num{32}$, $\num{16}$, and $\num{8}$ filters of size $\nxn{3}$ with a stride of $\num{1}$ and a ReLU activation function. The first two layers used ``valid'' padding while the last two layers used ``same'' padding. Figure~\ref{fig:methods_convpmm} shows a diagram of the convolutional layer architecture used in the ConvPMM for the MNIST-Digits dataset. For the Fashion-MNIST and EMNIST-Balanced datasets, the number of filters in each layer was doubled and an additional layer with $\num{8}$ filters of size $\nxn{3}$, a stride of $\num{1}$, and ``same'' padding was added to the end.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{./Figures/convpmm.pdf}
+    \caption{\label{fig:methods_convpmm} {\bf Diagram of the convolutional layer architecture used in the ConvPMM for the MNIST-Digits dataset.} The architecture consists of four layers of $\num{64}$, $\num{32}$, $\num{16}$, and $\num{8}$ trainable complex-valued filters of size $\nxn{3}$ with a stride of $\num{1}$ and a ReLU activation function. The first two layers use ``valid'' padding while the last two layers use ``same'' padding.}
+\end{figure}
+
+
+\subsection{Hybrid Transfer Learning with ResNet50}\label{sec:methods_hybrid}
+
+To demonstrate the ability for PMMs to be used in conjunction with and to complement established machine learning models, we have performed experiments with a hybrid transfer learning model built on ResNet50~\cite{he2015deep}. ResNet50 is a deep convolutional neural network that has been pre-trained on the ImageNet dataset of over one million images.
+For each of the datasets used in the experiments, the ResNet50 model---with a suitably-shaped input, $6\times$ upsampling layer, and final classification layer replaced with a global spatial pooling layer as shown in Fig.~\ref{fig:methods_hybrid}---was used to extract the features from the images. This resulted in a feature vector of length $\num{2048}$ for each image. A feedforward neural network (FNN) with the architecture shown in Fig.~\ref{fig:methods_hybrid} as well as a PMM of the form described in Methods Section~\ref{sec:methods_reg_class}, with a $\softmax$ on the outputs, were trained on these features. This can equivalently be thought of as a single self-contained model with several frozen, pre-trained traditional neural network layers followed either by more, trainable, traditional neural network layers (FNN) or by a trainable PMM acting as the final layer.
+
+The sizes of the layers in the FNN were fixed and the dropout percentage hyperparameter was tuned via a grid search using the CIFAR-10 dataset. The sizes of the matrices and number of eigenvectors used in the PMM were chosen such that the number of trainable parameters was less than the corresponding FNN. For each dataset, each model was randomly initialized $\num{10}$ times and trained for $\num{10}$ epochs with the Adam optimizer~\cite{kingma2017adam} using the categorical cross-entropy loss function. For datasets that were not pre-split into training and validation sets, $\num{10}\%$ of the training set was used as a validation set. The number of epochs was chosen such that training converged for all models. The top-1 accuracy of the models was calculated on the provided test sets and the mean with asymmetric uncertainties was reported. The positive (negative) uncertainty was calculated as the difference between the mean accuracy and the mean of all accuracies greater (less) than the mean accuracy.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.95\linewidth]{./Figures/resnet50_diagram.pdf}
+    \includegraphics[width=0.95\linewidth]{./Figures/dnn_diagram.pdf}
+    \caption{\label{fig:methods_hybrid} {\bf Upper: Model diagram for the frozen, pre-trained ResNet50 model used as a feature extractor in the hybrid transfer learning experiments.} The input shape is determined by the dataset, which is $\num{32}\times\num{32}\times\num{3}$ for the CIFAR-10 dataset used in this figure as an example. The output shape is $\num{2048}$ for the extracted feature vector. {\bf Lower: Model diagram for the trainable feedforward neural network (FNN) used in the hybrid transfer learning experiments.} The output shape of the final layer is determined by the number of classes in the dataset, which is $\num{10}$ in this figure as an example.}
+\end{figure}
+
+\section{Zero-Error Trotter Step Extrapolation}
+There are several efficient algorithms that determine energy levels on a quantum computer using the complex phases produced during the time evolution of quantum states \cite{Kitaev:1995qy,Abrams:1997gk,dorner2009optimal,Svore:2013fci,Choi:2020pdg,RuizGuzman:2021qyj,Qian:2021wya,Bee-Lindgren:2022nqb,Cohen:2023rhd}. 
+We consider the problem of extrapolating to $dt=0$ given data of energies for $dt\le\pi/||H||^2_2$. The Hamiltonian considered in this work is the one-dimensional Heisenberg model with an antisymmetric spin-exchange term known as the Dzyaloshinskii-Moriya (DM) interaction term with periodic boundary conditions.
+\begin{equation}
+    H = B\sum_i^Nr_i\sigma^z_i + J\sum_i^N(\sigma^z_i\sigma^z_{i+1}+\sigma^x_i\sigma^x_{i+1}+\sigma^y_i\sigma^y_{i+1}) + D\sum_i^N(\sigma^x_i\sigma^y_{i+1}-\sigma^y_i\sigma^x_{i+1})
+\end{equation}
+Where $r_i$ are random real numbers ranging from $[0,1)$, and we have chosen $B=4$, $J=8$, and $D=2.6$. The Trotter approximation for this underlying Hamiltonian consists of five terms: the external field term and each of the two interaction terms split by parity. We replicate this structure using the unitary eigenvalue PMM described in Methods Section~\ref{sec:prop_of_pmm},
+\begin{equation}
+    U(dt) = \prod_l^5\exp(-i\train{M_l}dt)
+\end{equation}
+where $\train{M_l}$ are the five independent $\nxn{\hyper{n}}$ Hermitian matrices of the PMM which form the unitary primary matrix. The $q$ desired energies, $\mathset{E_k}$, are determined by setting $\exp(-iE_kdt)$ equal to the eigenvalues of $U(dt)$. As mentioned Methods Section~\ref{sec:energy_obv_method}, one must consider an appropriate mapping between the energy levels of the PMM and the true levels of the data. The elements of $\train{M_l}$ are found by optimizing the mean squared error between the data and the energies evaluated at the corresponding values of $dt$. Twelve points were generated as a training set for each energy level. The closest point to $dt=0$ was used as a validation point for the PMM. The MLP was optimized through leave-one-out cross-validation and hyperparameters were found via grid search. The polynomials were fit to all the available data.
+
+\blockcomment{
+\clearpage
+\section*{ALL SECTIONS BELOW ARE FOR REFERENCE ONLY}
+
+\subsection*{Hamiltonian Emulation and Eigenstate Observables}
+Given data for $k$ energies and $k$ observables in the ground state of a Hamiltonian that is a function of some coupling consents
+\begin{equation}
+\begin{aligned}
+    H(\{c_j\}) &= H_0 +\sum_jc_jH_j\\
+      \hat{y}(\{c_j\}) &= [\hat{E}_k(\{c_j\}),\langle\psi_0(\{c_j\})|\hat{O}_k|\psi_0(\{c_j\})\rangle].
+      \end{aligned}
+\end{equation}
+
+We form a PMM with same structure
+\begin{equation}
+    M(\{c_j\}) = \train{M_0} + \sum_j c_j\train{M_j},
+\end{equation}
+and calculate $k$ eigenstate energies and $k$ eigenstate observables in the PMM ground state
+\begin{equation}
+    y(\{c_j\}) = [E_k(\{c_j\}),\langle\phi_0(\{c_j\})|\train{O}_k|\phi_0(\{c_j\})\rangle],
+\end{equation} 
+where $\train{M_0},\train{M}_j,\train{O}\in\mathbf{C}^{\hyper{n}\times\hyper{n}}$ are Hermitian matrices.
+Denote the trainable matrices, vectors, and scalars of the PMM by an underline. Likewise denote hyperparameters of the PMM by an overline.
+The trainable parameters are trained by minimizing the mean squared error over all $N$ training points.
+\begin{equation}
+    \begin{aligned}
+        \mathcal{L} = \frac{1}{N}\sum^N_{i=1}\left(\hat{y}_k(\{c^{(i)}_j\})-y_k(\{c^{(i)}_j\})\right)^2,
+    \end{aligned}
+\end{equation}
+where $\hat{y}_k(\{c^{(i)}_j\})$ is the true data, and $y_k(\{c^{(i)}_j\})$ corresponds to the output of the PMM.
+
+\subsection*{Zero Trotter Step Extrapolation}\label{sec:trotter_meth}
+Given a $N\times N$ Hamiltonian that is a sum of $l$ local Hamiltonians 
+\begin{equation}
+\begin{aligned}
+    H = \sum_{l=0}^mH_l.
+\end{aligned}
+\end{equation}
+The time evolution operator for time duration $t$ corresponds to the exponential of the Hamiltonian, $\expm{-iHt}$. This is implemented as a product of evolution operators for small time steps $dt$,
+\begin{equation}
+\begin{aligned}
+    U(dt) &= \expm{-iH_0dt}\expm{-iH_1dt}\cdots\expm{-iH_ldt}.
+\end{aligned}
+\end{equation}
+
+Each term $U(dt) = \expm{-iHdt}$ can be approximated by the Trotter approximation as a product of exponentials of the individual terms comprising $H$, which is accompanied by an error $\mathcal{O}(dt^2)$.   
+
+Once implemented on a quantum computer,  an algorithm is used to extract the energy levels using the complex phases produced during the time evolution of a quantum state. This data will then be used as snapshots of the energies  as a function of the time step $\hat{E}_k(dt)$.  
+
+We apply a PMM with the same underlying structure,
+\begin{equation}\label{eq:trotter_pmm_ham}
+    M = \sum_{l=0}^m\train{M_l},
+\end{equation}
+and follow the same approximation.
+\begin{equation}
+\begin{aligned}
+    U_M(dt) &= \expm{-i\train{M_0}dt} \expm{-i\train{M_1}dt}\cdots\expm{-i\train{M_l}dt},
+\end{aligned}
+\end{equation}
+where each of the matrices, $\train{M_l}$, are $\hyper{n}\times \hyper{n}$ Hermitian matrices. The desired energies $E_k$ are determined by setting $\expm{-iE_kdt}$ equal to the eigenvalues of $U_M(dt)$
+\begin{equation}
+    \begin{aligned}
+        E_k(dt) = \frac{ln(\Lambda[U_M(dt)]}{-idt}.
+    \end{aligned}
+\end{equation}
+Here $\Lambda[\cdot]$ denotes the eigenvalues of $U_M(dt)$. The trainable parameters $\train{M_l}$ are trained by minimizing the mean squared error over all $J$ training points, namely
+\begin{equation}
+    \begin{aligned}
+        \mathcal{L} = \frac{1}{J}\sum^J_i(\hat{E}_k(dt_i)-E_k(dt_i))^2,
+    \end{aligned}
+\end{equation}
+where $\hat{E}_k(dt)$ is the true data, and $E_k(dt)$ corresponds to the output of the PMM. To obtain the $E(dt=0)$ result, one does a direct diagonalization of the trained PMM in Eq.~\eqref{eq:trotter_pmm_ham}
+
+\subsection*{Anharmonic Lipkin-Meshkov-Glick PMM}
+
+\subsection*{Regression PMMs}\label{sec:regression_meth}
+Given dataset $X\in\R^\nxm{n}{m}$, we compute a ``Hamiltonian'' that is linear in the input features $x_i$
+\begin{equation}
+    \begin{aligned}
+        H(X) = \train{H_0} +\sum_i^mx_i\train{H_i}.
+    \end{aligned}
+\end{equation}
+We have defined $H_i\in\C^\nxm{\hyper{N}}{\hyper{N}}$. The eigensystem is then calculated for $H$
+\begin{equation}
+    H_k = V\Lambda V^\dagger = %
+    \begin{bmatrix}
+        \vert & \vert & \cdots & \vert \\
+        v_1 & v_2 & \cdots & v_{\hyper{l}}\\
+        \vert & \vert & \cdots & \vert
+    \end{bmatrix}%
+    \begin{bmatrix}
+        \lambda_1 & & & \\
+        & \lambda_2 & & \\
+        & & \ddots & \\
+        & & & \lambda_{\hyper{l}}
+    \end{bmatrix}%
+    \begin{bmatrix}
+        \vert & \vert & \cdots & \vert \\
+        v_1 & v_2 & \cdots & v_{\hyper{l}}\\
+        \vert & \vert & \cdots & \vert
+    \end{bmatrix}^\dagger.
+\end{equation}
+Ordering the eigenpairs by decreasing eigenvalue magnitude, $\abs{\lambda^{(k)}_1}\geq\abs{\lambda^{(k)}_2}\geq\cdots\geq\abs{\lambda^{(k)}_l}$, we select the first $\hyper{d}$ eigenvectors to ``decode'' into the output vector $z \in\R^c$,
+\begin{equation}
+    z_k = \train{g_k} + \sum_{i\leq j}^{\hyper{d}}\abs{v_i^\dagger \train{\Delta_{kij}} v_j}^2 - \frac{1}{2}\norm{\train{\Delta_{kij}}}_2^2,
+\end{equation}
+where $\train{\Delta_{kij}}\in\Herm\left(\hyper{l}\right)$ are trainable Hermitian ``decoder'' matrices and $\train{g}\in\R^c$ is a trainable bias vector. The trainable parameters are trained by minimizing a loss function over all $J$ training points
+\begin{equation}
+    \mathcal{L} = \sum_i^J\norm{\hat{z}_i-z_i}^P,
+\end{equation}
+where $\hat{z}$ is the true data, and $z$ is the output corresponding to the PMM.
+
+%\subsection*{Hamiltonian Emulation\label{sec:anharmonic}}
+%\subsection*{Zero Trotter Step Extrapolation\label{sec:trotter}}
+%One of the primary challenges in quantum computing is determining observables of interest while using circuits with as few qubits and quantum gates as possible.  This minimal resource strategy is necessary due to the limitations of noise and decoherence~\cite{leymann2020bitter}.
+%
+%We consider a quantum spin system corresponding to a one-dimensional Heisenberg model with an antisymmetric spin-exchange term known as the Dzyaloshinskii-Moriya (DM) interaction term\cite{DZYALOSHINSKY1958241,moriya1960anisotropic}.  Such spin models have recently attracted interest in studies of quantum coherence and entanglement \cite{motamedifar2023entanglement,radhakrishnan2017quantum,li2023quantum}. 
+%\begin{equation}
+%\label{eq:DM}
+%    H = B\sum_i r_i \sigma_i^z +J\sum_{i}(\sigma_i^x\sigma_{i+1}^x + \sigma_i^y\sigma_{i+1}^y+ \sigma_i^z\sigma_{i+1}^z) +  
+%   D\sum_{i}(\sigma_i^x\sigma_{i+1}^y-\sigma_i^y\sigma_{i+1}^x),
+%\end{equation}
+%We included a longitudinal-field term to the model with random perturbations drawn from a uniform distribution ranging from $[0,1)$. For a $N=10$ qubit system, we used the values $B=4$,$J=8$, and $D=2.6$ given periodic boundary conditions. We choose 12 values of $dt$ for each energy level considered, where the starting $dt = ||H||_2^2/\pi$. A single $9\times9$ PMM was trained on all three energy levels following the procedure described in the Method section~\ref{sec:trotter_meth}. The point closest to $dt=0$ was used as a validation point for the PMM. We also trained a multi-layer perceptron (MLP) on all three energies as well. However, for its training process we employed grid search with leave-one-out cross-validation for hyperparameter tuning. Lastly we also compared to polynomial interpolation. 
+%
+%Since we do not have data at smaller values of $dt$, the polynomial fitting is less reliable than the Chebyshev polynomial interpolation used in Ref.~\cite{rendon2023improved}. The results are shown in Fig.~\ref{fig:DM}. The MLP and polynomial interpolation were not able to handle the sharp avoided level crossings involving the ground with the first excited state and the first with second excited states. In contrast, the PMM reproduces the avoided level crossings properly---which are not present in the training data---allowing the PMM to extrapolate through interpolation to $dt = 0$ with much higher accuracy. 
+%
+
+For the list of 2D functions the training data was obtained from sampling 200 points in the space randomly given a uniform distribution from $[0,1)$. The test data we sampled 10000 points on a grid from $[0,1]$. 
+We used the same $7x7$ PMM with $d=3$ for all functions given the procedure outlined in the Methods, Section~\ref{sec:regression_meth}. 10\% of the training set for the PMM was used as a validation set. We then compared the results to a multitude of machine learning (ML) algorithms, where each ML algorithm was trained using grid search with cross-validation for hyperparameter tuning for each function.
+
+For the polynomial and Fourier series dataset the training data was obtained from sampling 200 points in the space randomly given a uniform distribution from $[-1,1)$. The test data we sampled 10000 points on a grid from $[-1,1]$.
+We used the same $9x9$ PMM with $d=3$ for all 10000 polynomials and 10000 Fourier series. 10\% of the training set for the PMM was used as a validation set. We then compared the results to a multitude of machine learning (ML) algorithms, where each ML algorithm was trained using grid search with cross-validation for hyperparameter tuning for every single polynomial and Fourier series in the 10000 functions included in the dataset.
+
+For the NASA/CERN datasets 35\% of the dataset was used as the train set. The ML models used the whole train set with grid search cross-validation. For PMM 10\% of the train set was used a validation set. For NASA a $7\times7$ with $d=3$ PMM was used. for the CERN a $15\times15$ with $d=3$ PMM was used. 
+
+% \begin{table}[h!]
+% \SetTblrInner{rowsep=2pt}
+% \centering
+% \begin{tblr}{lc}
+% \hline
+% \textbf{Name} & \textbf{Equation} \\
+% \hline
+% Franke$^\dagger$~\cite{Franke1979,Burkardt2016} &
+% $\begin{aligned}
+%         &\frac{3}{4} \exp \left\{ -\frac{(9x - 2)^2 + (9y - 2)^2}{4} \right\} + \frac{3}{4} \exp \left\{ -\frac{(9x + 1)^2}{49} - \frac{9y + 1}{10} \right\} \\
+%         &+ \frac{1}{2} \exp \left\{ -\frac{(9x - 7)^2 + (9y - 3)^2}{4} \right\} - \frac{1}{5} \exp \left\{ -(9x - 4)^2 - (9y - 7)^2 \right\}
+% \end{aligned}$\\
+% \hline
+% Cliff$^\dagger$~\cite{Burkardt2016} &
+% $\begin{aligned}\tfrac{1}{9}\tanh [ 9 ( y - x ) ] + \tfrac{1}{9}\end{aligned}$\\
+% \hline
+% Saddle$^\dagger$~\cite{Burkardt2016} &
+% $\begin{aligned}
+%     \frac{ 5/4 + \cos ( 27y/5 ) }{ 6 + 6 ( 3 x - 1 )^2 }
+% \end{aligned}$\\
+% \hline
+% Gentle$^\dagger$~\cite{Burkardt2016} &
+% $\begin{aligned}
+%     \tfrac{1}{3}\exp \left\{ - \alpha \left[ \left( x - \tfrac{1}{2} \right)^2 + \left( y - \tfrac{1}{2} \right)^2 \right] \right\}, \quad \alpha=81/16
+% \end{aligned}$\\
+% \hline
+% Steep$^\dagger$~\cite{Burkardt2016} &
+% $\begin{aligned}
+%     \tfrac{1}{3}\exp \left\{ - \alpha \left[ \left( x - \tfrac{1}{2} \right)^2 + \left( y - \tfrac{1}{2} \right)^2 \right] \right\}, \quad \alpha=81/4
+% \end{aligned}$\\
+% \hline
+% Sphere$^\dagger$~\cite{Burkardt2016} &
+% $\begin{aligned}
+%     -\tfrac{1}{2} + \sqrt{\left(\tfrac{8}{9}\right)^2 - \left(x - \tfrac{1}{2}\right)^2 - \left(y - \tfrac{1}{2}\right)^2}\\
+% \end{aligned}$\\
+% \hline
+% Trigonometric$^\dagger$~\cite{Burkardt2016} &
+% $\begin{aligned}
+%     2 \cos ( 10 x ) \sin ( 10 y ) + \sin ( 10 x y )
+% \end{aligned}$\\
+% \hline
+% Gaussians$^\dagger$~\cite{Burkardt2016} &
+% $\begin{aligned}
+%     \exp \left\{ -u^2/2 \right\} + \tfrac{3}{4}\exp \left\{ -v^2/2 \right\} \left[ 1 + \exp \left\{ -u^2/2 \right\} \right], \quad \left\{\begin{aligned}u &= 5-10x\\ v &= 5-10y\end{aligned}\right.
+% \end{aligned}$\\
+% \hline
+% Cloverleaf$^\dagger$~\cite{Burkardt2016} &
+% $\begin{aligned}
+%         \left[\left( \frac{20}{3} \right)^3 uv\right]^2 \left[\left( \frac{1}{1 + u} \right) \left( \frac{1}{1 + v} \right)\right]^5\left[ u - \frac{2}{1 + u} \right]\left[ v - \frac{2}{1 + v} \right], \quad \left\{\begin{aligned}
+%         u &= \exp\left\{\frac{10 - 20x}{3}\right\}\\
+%         v &= \exp\left\{\frac{10 - 20y}{3}\right\}
+%         \end{aligned}\right.
+% \end{aligned}$\\
+% \hline
+% Cosine Peak$^\dagger$~\cite{Burkardt2016} &
+% $\begin{aligned}
+%     &\exp \left\{ -\tfrac{2}{5} r \right\} \cos\left(\tfrac{3}{2} r\right), \quad r = \sqrt{(8x-4)^2+\left(9y-\tfrac{9}{2}\right)^2}
+% \end{aligned}$\\
+% \hline
+% Bilinear$^\dagger$~\cite{Burkardt2016} &
+% $\begin{aligned}
+%     xy + x
+% \end{aligned}$ \\
+% \hline
+% Vicente Romero$^\dagger$~\cite{Romero2006,Burkardt2016} &
+% $\begin{aligned}
+%     \frac{6}{5}r + \frac{21}{40} \sin \left( \frac{12\pi}{5\sqrt{2}} r \right) \sin\left[\frac{13}{10} \atantwo(y, x)\right],\quad r = \sqrt{x^2 + y^2}
+% \end{aligned}$\\
+% \hline
+% Runge$^\dagger$~\cite{Runge1901,Burkardt2016} &
+% $\begin{aligned}
+%     \left[(10x - 5)^2 + (10y - 5)^2 + 1 \right]^{-1}
+% \end{aligned}$\\
+% \hline
+% Fourier series$^\ddagger$ &
+% $\begin{aligned}
+%     \sum_{n=1}^{N} \sum_{m=1}^{M} \left[ a_{nm} \sin \left( \frac{n \pi x}{3} \right) \sin \left( \frac{m \pi y}{3} \right) + b_{nm} \cos \left( \frac{n \pi x}{3} \right) \cos \left( \frac{m \pi y}{3} \right) \right], \quad a_{nm}, b_{nm} \sim \mathcal{N}(0,1)
+% \end{aligned}$\\
+% \hline
+% Polynomials$^\ddagger$ &
+% $\begin{aligned}
+%     \sum_{n=0}^{N} \sum_{m=0}^{M} a_{nm} x^n y^m, \quad a_{nm}\sim\mathcal{N}(0,1)
+% \end{aligned}$\\
+% \hline
+% $\dagger$ $(x,y)\in[0,1]\times[0,1]$ \\
+% $\ddagger$ $(x,y)\in[-1,1]\times[-1,1]$
+% \end{tblr}
+% \caption{\label{tab:math_functions}Collection of mathematical functions used for testing regression performance.}
+% \end{table}
+
+\subsection*{Image Classification PMMs}
+(This is an extremely rough draft, just to get the maths written out.)
+
+Given an image $X\in\R^\nxm{n}{m}$, we select $w$ windows of shape $\nxm{r_i}{s_i}$. For each window $X_i$ the products $X_iX_i^T\in\R^\nxn{r}$ and $X_i^T X_i\in\R^\nxn{s}$ are computed as surrogates for the row-wise and column-wise correlation matrices, respectively. For each surrogate correlation matrix, the entries are uniformly normalized element-wise to lie in the range $\left[0,1\right]$, and finally the diagonal elements are set to unity. Denote these post-normalized products by $R_i$ and $C_i$,
+\begin{equation}
+    R_i \stackrel{\sim}{\propto} X_i X_i^T,\quad C_i \stackrel{\sim}{\propto} X_i^T X_i.
+\end{equation}
+Note that this step can be a preprocessing step, or included in the inference process of the PMM. This allows the PMM to operate efficiently on the training set as well as adapt to new previously-unseen data.
+
+Denote the trainable matrices, vectors, and scalars of the PMM by an underline $\train{M}$, $\train{v}$, $\train{a}$. Likewise denote hyperparameters of the PMM by an overline, such as the number and shape of windows $\hyper{w}$, $\hyper{r_i}$, $\hyper{s_i}$. The inference process of the PMM which aims to predict $c$ class probabilities for an image, $X$, begins with encoding the image into the row- and column-wise correlation matrix surrogates for various windows as mentioned above. Then
+\begin{equation}
+    M = \sum_i^{\hyper{w}} \train{K_i}R_i\train{K_i}^\dagger + \train{L_i}C_i\train{L_i}^\dagger,
+\end{equation}
+encodes these surrogate correlation matrices across all windows into a single Hermitian matrix $M\in\Herm\left(\hyper{k}\right)$ using trainable ``compressor'' matrices $\train{K_i}\in\C^\nxm{\hyper{k}}{\hyper{r_i}}$ and $\train{L_i}\in\C^\nxm{\hyper{k}}{\hyper{s_i}}$. Next we compute a ``Hamiltonian'' for each possible output class $k$,
+\begin{equation}
+    H_k = \train{D_k}M\train{D_k}^\dagger + \train{B_k},\quad k = 1, 2, \ldots, c,
+\end{equation}
+where $\train{D_k}\in\C^\nxm{\hyper{l}}{\hyper{k}}$ are trainable ``discriminator'' matrices and $\train{B_k}\in\Herm\left(\hyper{l}\right)$ are trainable bias Hermitian matrices. The eigensystem is then calculated for each $H_k$
+\begin{equation}
+    H_k = V_k\Lambda_k V_k^\dagger = %
+    \begin{bmatrix}
+        \vert & \vert & \cdots & \vert \\
+        v_1^{(k)} & v_2^{(k)} & \cdots & v_{\hyper{l}}^{(k)}\\
+        \vert & \vert & \cdots & \vert
+    \end{bmatrix}%
+    \begin{bmatrix}
+        \lambda^{(k)}_1 & & & \\
+        & \lambda^{(k)}_2 & & \\
+        & & \ddots & \\
+        & & & \lambda^{(k)}_{\hyper{l}}
+    \end{bmatrix}%
+    \begin{bmatrix}
+        \vert & \vert & \cdots & \vert \\
+        v_1^{(k)} & v_2^{(k)} & \cdots & v_{\hyper{l}}^{(k)}\\
+        \vert & \vert & \cdots & \vert
+    \end{bmatrix}^\dagger.
+\end{equation}
+Ordering the eigenpairs by decreasing eigenvalue magnitude, $\abs{\lambda^{(k)}_1}\geq\abs{\lambda^{(k)}_2}\geq\cdots\geq\abs{\lambda^{(k)}_l}$, we select the first $\hyper{d}$ eigenvectors to ``decode'' into the penultimate output vector $z\in\R^c$,
+\begin{equation}
+    z_k = \train{g_k} + \sum_{i\leq j}^{\hyper{d}}\abs{v_i^{(k)\dagger} \train{\Delta_{kij}} v_j^{(k)}}^2 - \frac{1}{2}\norm{\train{\Delta_{kij}}}_2^2,
+\end{equation}
+where $\train{\Delta_{kij}}\in\Herm\left(\hyper{l}\right)$ are trainable Hermitian ``decoder'' matrices and $\train{g}\in\R^c$ is a trainable bias vector. Note that this step is constructed especially to preserve unitary invariance as well as unbounded output range. Finally, to convert this vector to class probabilities, a standard $\softmax$ with temperature $\hyper{\tau}$ is applied,
+\begin{equation}
+\quad p_k = \softmax\left(z_k/\hyper{\tau}\right) = \frac{\exp(z_k/\hyper{\tau})}{\sum_{k'=1}^c \exp(z_{k'}/\hyper{\tau})}.
+\end{equation}
+The trainable parameters are trained by minimizing the mean cross-entropy loss over all $N$ training examples,
+\begin{equation}
+    \mathcal{L} = -\frac{1}{N}\sum\limits_n^N \sum\limits_k^c \hat{p}^{(n)}_k \ln p^{(n)}_k
+\end{equation}
+where $\hat{p}^{(n)}_k$ is the true probability for sample $n$ to lie in class $k$, and $p^{(n)}_k$ is the corresponding predicted probability from the PMM.
+
+}
+
+\bibliography{references}
+
+\end{document}
